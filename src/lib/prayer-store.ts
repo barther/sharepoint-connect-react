@@ -190,7 +190,6 @@ const nextId = (xs: { id: number }[]) =>
 export const usePrayerStore = create<PrayerStore>((set, get) => ({
   items: seed,
   events: seedEvents,
-  snapshots: seedSnapshots,
   currentScribe: "You",
 
   add: (p) => {
@@ -310,28 +309,6 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
     get()
       .events.filter((e) => e.requestId === id)
       .sort((a, b) => +new Date(b.at) - +new Date(a.at)),
-
-  takeSnapshot: () => {
-    const now = new Date();
-    const { year, week, key } = isoWeekOf(now);
-    const existing = get().snapshots.find((s) => s.id === key);
-    const snap: WeeklySnapshot = {
-      id: key,
-      printedOn: now.toISOString(),
-      printedBy: get().currentScribe,
-      isoYear: year,
-      isoWeek: week,
-      items: snapshotItems(get().items),
-    };
-    set({
-      snapshots: existing
-        ? get().snapshots.map((s) => (s.id === key ? snap : s))
-        : [snap, ...get().snapshots],
-    });
-    return snap;
-  },
-
-  snapshotFor: (key) => get().snapshots.find((s) => s.id === key),
 }));
 
 export type { PrayerRequest, PrayerCategory, PrayerStatus };
