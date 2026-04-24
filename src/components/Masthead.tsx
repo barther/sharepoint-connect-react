@@ -6,25 +6,33 @@ export const Masthead = () => {
   const today = format(new Date(), "EEEE, MMMM d, yyyy");
 
   return (
-    <header className="border-b border-foreground/15 bg-background/60 backdrop-blur-[2px]">
-      <div className="container-wide py-6">
-        <div className="flex items-baseline justify-between gap-6 flex-wrap">
-          <div className="flex items-baseline gap-4">
-            <Link to="/" className="font-display text-2xl md:text-3xl leading-none tracking-tight hover:text-primary transition-colors">
-              The Prayer List
-            </Link>
-            <span className="hidden md:inline eyebrow">Lithia Springs Methodist</span>
-          </div>
-          <p className="font-accent text-xs md:text-sm text-muted-foreground italic">
+    <header className="border-b border-foreground/15 bg-background">
+      <div className="container-wide pt-5 pb-2 sm:pt-6">
+        {/* Title + date */}
+        <div className="text-center sm:text-left sm:flex sm:items-baseline sm:justify-between sm:gap-6">
+          <Link
+            to="/"
+            className="font-display text-3xl sm:text-4xl leading-none tracking-tight hover:text-primary transition-colors block"
+          >
+            The Prayer List
+          </Link>
+          <p className="font-accent text-sm text-muted-foreground italic mt-2 sm:mt-0">
             {today}
           </p>
         </div>
+        <p className="eyebrow text-center sm:text-left mt-2">
+          Lithia Springs Methodist
+        </p>
+
         <div className="rule-double mt-4" />
-        <nav className="mt-3 flex items-center gap-6 font-accent text-sm">
+
+        {/* Nav — large tap targets, stacks evenly on phone */}
+        <nav className="grid grid-cols-3 sm:flex sm:items-center sm:gap-2">
           <NavLink to="/" active={pathname === "/"}>Current</NavLink>
-          <NavLink to="/archive" active={pathname.startsWith("/archive")}>Past & Resolved</NavLink>
+          <NavLink to="/archive" active={pathname.startsWith("/archive")}>Past</NavLink>
           <NavLink to="/request/new" active={pathname === "/request/new"}>
-            <span className="text-primary">＋</span> New request
+            <span className="text-primary font-bold mr-1">＋</span>
+            <span>New</span>
           </NavLink>
         </nav>
       </div>
@@ -35,11 +43,12 @@ export const Masthead = () => {
 const NavLink = ({ to, active, children }: { to: string; active: boolean; children: React.ReactNode }) => (
   <Link
     to={to}
-    className={`relative pb-1 transition-colors ${
-      active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+    className={`font-accent text-base sm:text-sm py-3 sm:py-2 px-2 sm:px-4 min-h-[48px] flex items-center justify-center sm:justify-start border-b-2 transition-colors ${
+      active
+        ? "border-primary text-foreground"
+        : "border-transparent text-muted-foreground hover:text-foreground hover:border-foreground/30"
     }`}
   >
     {children}
-    {active && <span className="absolute -bottom-px left-0 right-0 h-px bg-primary" />}
   </Link>
 );
