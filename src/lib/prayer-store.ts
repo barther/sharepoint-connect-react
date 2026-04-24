@@ -164,39 +164,11 @@ const seedEvents: PrayerEvent[] = [
   { id: 19, requestId: 10, kind: "status", at: "2026-01-15T10:00:00Z", by: "Pastor John", from: "Active", to: "Archived" },
 ];
 
-// A couple seed snapshots so the "Past Wednesdays" list isn't empty.
-const snapshotItems = (items: PrayerRequest[]) =>
-  items
-    .filter((i) => i.status === "Active" || i.status === "Ongoing")
-    .map(({ id, title, request, category, status, relationship, dateSubmitted }) => ({
-      id, title, request, category, status, relationship, dateSubmitted,
-    }));
-
-const seedSnapshots: WeeklySnapshot[] = [
-  {
-    id: "2026-W16",
-    printedOn: "2026-04-15T07:30:00Z",
-    printedBy: "Linda M.",
-    isoYear: 2026,
-    isoWeek: 16,
-    items: snapshotItems(seed).slice(0, 6),
-  },
-  {
-    id: "2026-W15",
-    printedOn: "2026-04-08T07:25:00Z",
-    printedBy: "Linda M.",
-    isoYear: 2026,
-    isoWeek: 15,
-    items: snapshotItems(seed).slice(0, 5),
-  },
-];
-
 // ---------- Store ----------
 
 interface PrayerStore {
   items: PrayerRequest[];
   events: PrayerEvent[];
-  snapshots: WeeklySnapshot[];
 
   // Identity of the current scribe — replaced by MSAL claims later.
   currentScribe: string;
@@ -210,9 +182,6 @@ interface PrayerStore {
   addNote: (id: number, note: string) => void;
 
   eventsFor: (id: number) => PrayerEvent[];
-
-  takeSnapshot: () => WeeklySnapshot;
-  snapshotFor: (key: string) => WeeklySnapshot | undefined;
 }
 
 const nextId = (xs: { id: number }[]) =>
