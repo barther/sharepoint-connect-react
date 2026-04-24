@@ -43,11 +43,25 @@ const Detail = () => {
     (a, b) => +new Date(b.at) - +new Date(a.at)
   );
 
-  const onAddNote = () => {
+  const onAddNote = async () => {
     if (!noteDraft.trim()) return;
-    addNote(item.id, noteDraft);
-    setNoteDraft("");
-    toast.success("Note added to the timeline.");
+    try {
+      await addNote(item.id, noteDraft);
+      setNoteDraft("");
+      toast.success("Note added to the timeline.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not add note.");
+    }
+  };
+
+  const doStatus = async (next: typeof item.status, msg: string, after?: () => void) => {
+    try {
+      await setStatus(item.id, next);
+      toast.success(msg);
+      after?.();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not update status.");
+    }
   };
 
   return (
