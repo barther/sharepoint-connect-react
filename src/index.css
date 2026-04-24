@@ -2,96 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/*
+  Prayer List — design system
+  Inspired by liturgical print, Penguin Classics, parish bulletins.
+  All colors HSL. No SaaS-bro fonts. No gradients.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Parchment & ink */
+    --background: 38 32% 94%;         /* warm off-white parchment */
+    --foreground: 25 22% 14%;         /* deep ink, slightly warm */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --surface: 38 35% 91%;            /* a touch deeper than bg, for cards */
+    --surface-sunken: 36 28% 88%;     /* for input wells, dividers */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --card: 38 40% 96%;
+    --card-foreground: 25 22% 14%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --popover: 38 40% 96%;
+    --popover-foreground: 25 22% 14%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Oxblood — single liturgical accent */
+    --primary: 358 48% 32%;
+    --primary-foreground: 38 40% 96%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --secondary: 36 22% 82%;
+    --secondary-foreground: 25 22% 14%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --muted: 36 22% 86%;
+    --muted-foreground: 25 12% 38%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --accent: 358 48% 32%;
+    --accent-foreground: 38 40% 96%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Sage — quiet "resolved/peace" tone */
+    --resolved: 140 14% 38%;
+    --resolved-foreground: 38 40% 96%;
 
-    --radius: 0.5rem;
+    /* Indigo ink — "ongoing" */
+    --ongoing: 220 30% 32%;
+    --ongoing-foreground: 38 40% 96%;
 
-    --sidebar-background: 0 0% 98%;
+    --destructive: 358 60% 38%;
+    --destructive-foreground: 38 40% 96%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --border: 30 18% 78%;
+    --rule: 25 22% 14%;               /* hairline rule color (used at low alpha) */
+    --input: 30 18% 78%;
+    --ring: 358 48% 32%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    --radius: 0.25rem;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    /* Type */
+    --font-display: "Cormorant Garamond", "Garamond", "Hoefler Text", serif;
+    --font-accent: "Fraunces", "Cormorant Garamond", serif;
+    --font-body: "Newsreader", "Iowan Old Style", "Charter", Georgia, serif;
 
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 38 35% 91%;
+    --sidebar-foreground: 25 22% 14%;
+    --sidebar-primary: 358 48% 32%;
+    --sidebar-primary-foreground: 38 40% 96%;
+    --sidebar-accent: 36 22% 86%;
+    --sidebar-accent-foreground: 25 22% 14%;
+    --sidebar-border: 30 18% 78%;
+    --sidebar-ring: 358 48% 32%;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+  /* No dark mode for v1 — this is a daylight, contemplative app. */
 }
 
 @layer base {
@@ -99,7 +77,97 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    font-family: var(--font-body);
+    font-feature-settings: "kern", "liga", "onum";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.55;
+    /* Subtle parchment grain via layered radial gradients (still no SaaS gradient bars) */
+    background-image:
+      radial-gradient(hsl(25 22% 14% / 0.012) 1px, transparent 1px),
+      radial-gradient(hsl(25 22% 14% / 0.018) 1px, transparent 1px);
+    background-size: 3px 3px, 7px 7px;
+    background-position: 0 0, 1px 2px;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    color: hsl(var(--foreground));
+  }
+
+  h1 { font-size: clamp(2.25rem, 4vw, 3.25rem); line-height: 1.05; }
+  h2 { font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.15; }
+  h3 { font-size: 1.25rem; line-height: 1.3; }
+
+  /* Numerals & small labels in Fraunces */
+  .font-accent { font-family: var(--font-accent); font-feature-settings: "kern", "liga", "ss01"; }
+  .font-display { font-family: var(--font-display); }
+  .font-body { font-family: var(--font-body); }
+
+  /* Eyebrow/label — uppercase, tracked, small caps feel */
+  .eyebrow {
+    font-family: var(--font-accent);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Hairline rule */
+  .rule {
+    border: 0;
+    border-top: 1px solid hsl(var(--rule) / 0.18);
+  }
+  .rule-double {
+    border: 0;
+    border-top: 1px solid hsl(var(--rule) / 0.22);
+    border-bottom: 1px solid hsl(var(--rule) / 0.22);
+    height: 4px;
+  }
+
+  /* Drop cap helper */
+  .drop-cap::first-letter {
+    font-family: var(--font-display);
+    font-weight: 600;
+    float: left;
+    font-size: 3.4em;
+    line-height: 0.85;
+    padding: 0.25rem 0.5rem 0 0;
+    color: hsl(var(--primary));
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.18);
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer components {
+  .container-prose {
+    @apply mx-auto px-6;
+    max-width: 44rem;
+  }
+  .container-wide {
+    @apply mx-auto px-6;
+    max-width: 64rem;
+  }
+
+  .ornament {
+    font-family: var(--font-display);
+    color: hsl(var(--primary) / 0.5);
+    letter-spacing: 0.5em;
+    text-align: center;
+    user-select: none;
   }
 }
