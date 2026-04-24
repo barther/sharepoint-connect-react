@@ -1,168 +1,18 @@
 import { create } from "zustand";
+import {
+  fetchRequests,
+  fetchEvents,
+  createRequest,
+  patchRequest,
+  deleteRequest,
+  createEvent,
+} from "./graph";
 import type {
   PrayerRequest,
   PrayerCategory,
   PrayerStatus,
   PrayerEvent,
-  PrayerEventKind,
 } from "./prayer-types";
-
-// ---------- Seed data ----------
-
-const seed: PrayerRequest[] = [
-  {
-    id: 1,
-    title: "Margaret Ellison",
-    request:
-      "Continued strength through her recovery from hip surgery. She is home now and beginning physical therapy this week.",
-    category: "Member",
-    status: "Active",
-    relationship: "Member, Choir",
-    dateSubmitted: "2026-04-20",
-    notes: "Family appreciates meals on Tuesdays and Thursdays.",
-    modified: "2026-04-22T14:10:00Z",
-    created: "2026-04-20T09:00:00Z",
-    author: "Pastor John",
-  },
-  {
-    id: 2,
-    title: "The Wheeler Family",
-    request:
-      "Comfort and peace following the passing of Tom Wheeler. Pray especially for Susan and the grandchildren as they prepare for the service this Saturday.",
-    category: "Family or Friend",
-    status: "Active",
-    relationship: "Family of member",
-    dateSubmitted: "2026-04-18",
-    modified: "2026-04-21T18:00:00Z",
-    created: "2026-04-18T11:00:00Z",
-    author: "Linda M.",
-  },
-  {
-    id: 3,
-    title: "James Okafor",
-    request: "Discernment as he considers a call to seminary.",
-    category: "Member",
-    status: "Ongoing",
-    relationship: "Youth group",
-    dateSubmitted: "2026-03-02",
-    modified: "2026-04-15T08:30:00Z",
-    created: "2026-03-02T10:00:00Z",
-    author: "Pastor John",
-  },
-  {
-    id: 4,
-    title: "Our Wednesday food pantry",
-    request:
-      "For the volunteers, the families we serve, and continued generosity from the congregation through the spring.",
-    category: "Nation or World",
-    status: "Ongoing",
-    dateSubmitted: "2026-01-10",
-    modified: "2026-04-10T12:00:00Z",
-    created: "2026-01-10T09:00:00Z",
-    author: "Deacon Ruth",
-  },
-  {
-    id: 5,
-    title: "Baby Eleanor Hayes",
-    request: "Thanksgiving for her safe arrival on Easter morning. Mother and baby both doing well.",
-    category: "Member",
-    status: "Active",
-    relationship: "Member family",
-    dateSubmitted: "2026-04-05",
-    modified: "2026-04-19T15:00:00Z",
-    created: "2026-04-05T08:00:00Z",
-    author: "Pastor John",
-  },
-  {
-    id: 6,
-    title: "David Chen",
-    request: "Healing from pneumonia; he is responding well to treatment and was moved out of the ICU yesterday.",
-    category: "Family or Friend",
-    status: "Active",
-    relationship: "Visitor",
-    dateSubmitted: "2026-04-15",
-    modified: "2026-04-22T09:00:00Z",
-    created: "2026-04-15T16:00:00Z",
-    author: "Linda M.",
-  },
-  {
-    id: 7,
-    title: "The Patel family",
-    request: "Safe travel as they visit relatives overseas this month.",
-    category: "Member",
-    status: "Active",
-    dateSubmitted: "2026-04-12",
-    modified: "2026-04-12T10:00:00Z",
-    created: "2026-04-12T10:00:00Z",
-    author: "Pastor John",
-  },
-  {
-    id: 8,
-    title: "Robert Mason",
-    request: "Strength and clarity as he begins a new chapter of work after retirement.",
-    category: "Member",
-    status: "Resolved",
-    dateSubmitted: "2026-02-01",
-    modified: "2026-03-30T11:00:00Z",
-    created: "2026-02-01T09:00:00Z",
-    author: "Pastor John",
-  },
-  {
-    id: 9,
-    title: "Anna Bauer",
-    request: "Recovery from knee surgery — back to walking with the morning group.",
-    category: "Member",
-    status: "Resolved",
-    dateSubmitted: "2026-01-15",
-    modified: "2026-03-01T08:00:00Z",
-    created: "2026-01-15T09:00:00Z",
-    author: "Linda M.",
-  },
-  {
-    id: 10,
-    title: "Spring mission trip",
-    request: "Safe return of the youth team and continued fruit from the relationships built.",
-    category: "Nation or World",
-    status: "Archived",
-    dateSubmitted: "2025-11-01",
-    modified: "2026-01-15T10:00:00Z",
-    created: "2025-11-01T09:00:00Z",
-    author: "Pastor John",
-  },
-];
-
-// Seed events derived from the seed data so the timeline isn't empty on first load.
-const seedEvents: PrayerEvent[] = [
-  // Margaret — created, then a status touch later
-  { id: 1, requestId: 1, kind: "created", at: "2026-04-20T09:00:00Z", by: "Pastor John" },
-  { id: 2, requestId: 1, kind: "edited", at: "2026-04-22T14:10:00Z", by: "Linda M.", note: "Updated request — she's home from hospital." },
-
-  { id: 3, requestId: 2, kind: "created", at: "2026-04-18T11:00:00Z", by: "Linda M." },
-  { id: 4, requestId: 2, kind: "note", at: "2026-04-21T18:00:00Z", by: "Pastor John", note: "Service set for Saturday at 11am. Susan asked for cards mailed to home address." },
-
-  { id: 5, requestId: 3, kind: "created", at: "2026-03-02T10:00:00Z", by: "Pastor John" },
-  { id: 6, requestId: 3, kind: "status", at: "2026-03-23T19:00:00Z", by: "Pastor John", from: "Active", to: "Ongoing" },
-  { id: 7, requestId: 3, kind: "edited", at: "2026-04-15T08:30:00Z", by: "Pastor John", note: "Application submitted to Candler." },
-
-  { id: 8, requestId: 4, kind: "created", at: "2026-01-10T09:00:00Z", by: "Deacon Ruth" },
-  { id: 9, requestId: 4, kind: "status", at: "2026-02-01T19:00:00Z", by: "Deacon Ruth", from: "Active", to: "Ongoing" },
-
-  { id: 10, requestId: 5, kind: "created", at: "2026-04-05T08:00:00Z", by: "Pastor John" },
-
-  { id: 11, requestId: 6, kind: "created", at: "2026-04-15T16:00:00Z", by: "Linda M." },
-  { id: 12, requestId: 6, kind: "edited", at: "2026-04-22T09:00:00Z", by: "Linda M.", note: "Out of ICU, moved to step-down unit." },
-
-  { id: 13, requestId: 7, kind: "created", at: "2026-04-12T10:00:00Z", by: "Pastor John" },
-
-  { id: 14, requestId: 8, kind: "created", at: "2026-02-01T09:00:00Z", by: "Pastor John" },
-  { id: 15, requestId: 8, kind: "status", at: "2026-03-30T11:00:00Z", by: "Pastor John", from: "Active", to: "Resolved" },
-
-  { id: 16, requestId: 9, kind: "created", at: "2026-01-15T09:00:00Z", by: "Linda M." },
-  { id: 17, requestId: 9, kind: "status", at: "2026-03-01T08:00:00Z", by: "Linda M.", from: "Active", to: "Resolved" },
-
-  { id: 18, requestId: 10, kind: "created", at: "2025-11-01T09:00:00Z", by: "Pastor John" },
-  { id: 19, requestId: 10, kind: "status", at: "2026-01-15T10:00:00Z", by: "Pastor John", from: "Active", to: "Archived" },
-];
 
 // ---------- Store ----------
 
@@ -170,135 +20,179 @@ interface PrayerStore {
   items: PrayerRequest[];
   events: PrayerEvent[];
 
-  // Identity of the current scribe — replaced by MSAL claims later.
+  loaded: boolean;
+  loading: boolean;
+  error: string | null;
+
+  // Identity of the current scribe — set from MSAL after sign-in.
   currentScribe: string;
+  currentUpn: string | undefined;
+  setIdentity: (name: string, upn?: string) => void;
+
+  load: () => Promise<void>;
 
   add: (
     p: Omit<PrayerRequest, "id" | "modified" | "created" | "author">
-  ) => PrayerRequest;
-  update: (id: number, patch: Partial<PrayerRequest>, opts?: { note?: string }) => void;
-  remove: (id: number) => void;
-  setStatus: (id: number, status: PrayerStatus) => void;
-  addNote: (id: number, note: string) => void;
+  ) => Promise<PrayerRequest>;
+  update: (
+    id: number,
+    patch: Partial<PrayerRequest>,
+    opts?: { note?: string }
+  ) => Promise<void>;
+  remove: (id: number) => Promise<void>;
+  setStatus: (id: number, status: PrayerStatus) => Promise<void>;
+  addNote: (id: number, note: string) => Promise<void>;
 
   eventsFor: (id: number) => PrayerEvent[];
 }
 
-const nextId = (xs: { id: number }[]) =>
-  Math.max(0, ...xs.map((x) => x.id)) + 1;
-
 export const usePrayerStore = create<PrayerStore>((set, get) => ({
-  items: seed,
-  events: seedEvents,
+  items: [],
+  events: [],
+  loaded: false,
+  loading: false,
+  error: null,
   currentScribe: "You",
+  currentUpn: undefined,
 
-  add: (p) => {
-    const now = new Date().toISOString();
-    const item: PrayerRequest = {
-      ...p,
-      id: nextId(get().items),
-      modified: now,
-      created: now,
-      author: get().currentScribe,
-    };
-    const event: PrayerEvent = {
-      id: nextId(get().events),
-      requestId: item.id,
-      kind: "created",
-      at: now,
-      by: get().currentScribe,
-    };
-    set({ items: [item, ...get().items], events: [...get().events, event] });
+  setIdentity: (name, upn) => set({ currentScribe: name, currentUpn: upn }),
+
+  load: async () => {
+    if (get().loading) return;
+    set({ loading: true, error: null });
+    try {
+      const [items, events] = await Promise.all([fetchRequests(), fetchEvents()]);
+      set({
+        items: items.sort((a, b) => +new Date(b.created) - +new Date(a.created)),
+        events,
+        loaded: true,
+        loading: false,
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to load list.";
+      set({ loading: false, error: msg });
+      throw e;
+    }
+  },
+
+  add: async (p) => {
+    const item = await createRequest(p);
+    set({ items: [item, ...get().items] });
+
+    // Best-effort audit row.
+    try {
+      const ev = await createEvent({
+        requestId: item.id,
+        kind: "created",
+        byName: get().currentScribe,
+        byUpn: get().currentUpn,
+      });
+      set({ events: [...get().events, ev] });
+    } catch {
+      /* non-fatal */
+    }
     return item;
   },
 
-  update: (id, patch, opts) => {
-    const now = new Date().toISOString();
+  update: async (id, patch, opts) => {
     const before = get().items.find((i) => i.id === id);
     if (!before) return;
 
+    await patchRequest(id, patch);
+    const now = new Date().toISOString();
+    set({
+      items: get().items.map((i) =>
+        i.id === id ? { ...i, ...patch, modified: now } : i
+      ),
+    });
+
     const newEvents: PrayerEvent[] = [];
     if (patch.status && patch.status !== before.status) {
-      newEvents.push({
-        id: nextId([...get().events, ...newEvents]),
-        requestId: id,
-        kind: "status",
-        at: now,
-        by: get().currentScribe,
-        from: before.status,
-        to: patch.status,
-      });
+      try {
+        const ev = await createEvent({
+          requestId: id,
+          kind: "status",
+          byName: get().currentScribe,
+          byUpn: get().currentUpn,
+          from: before.status,
+          to: patch.status,
+        });
+        newEvents.push(ev);
+      } catch {
+        /* non-fatal */
+      }
     }
-    // Treat any edit to text/category/etc as a generic "edited" event.
     const textChanged =
       (patch.request !== undefined && patch.request !== before.request) ||
       (patch.title !== undefined && patch.title !== before.title) ||
       (patch.category !== undefined && patch.category !== before.category) ||
       (patch.relationship !== undefined && patch.relationship !== before.relationship) ||
-      (patch.address !== undefined && patch.address !== before.address);
+      (patch.address !== undefined && patch.address !== before.address) ||
+      (patch.notes !== undefined && patch.notes !== before.notes);
     if (textChanged) {
-      newEvents.push({
-        id: nextId([...get().events, ...newEvents]),
-        requestId: id,
-        kind: "edited",
-        at: now,
-        by: get().currentScribe,
-        note: opts?.note,
-      });
+      try {
+        const ev = await createEvent({
+          requestId: id,
+          kind: "edited",
+          byName: get().currentScribe,
+          byUpn: get().currentUpn,
+          note: opts?.note,
+        });
+        newEvents.push(ev);
+      } catch {
+        /* non-fatal */
+      }
     }
-
-    set({
-      items: get().items.map((i) =>
-        i.id === id ? { ...i, ...patch, modified: now } : i
-      ),
-      events: [...get().events, ...newEvents],
-    });
+    if (newEvents.length) set({ events: [...get().events, ...newEvents] });
   },
 
-  remove: (id) =>
+  remove: async (id) => {
+    await deleteRequest(id);
     set({
       items: get().items.filter((i) => i.id !== id),
       events: get().events.filter((e) => e.requestId !== id),
-    }),
+    });
+  },
 
-  setStatus: (id, status) => {
+  setStatus: async (id, status) => {
     const before = get().items.find((i) => i.id === id);
     if (!before || before.status === status) return;
+
+    await patchRequest(id, { status });
     const now = new Date().toISOString();
     set({
       items: get().items.map((i) =>
         i.id === id ? { ...i, status, modified: now } : i
       ),
-      events: [
-        ...get().events,
-        {
-          id: nextId(get().events),
-          requestId: id,
-          kind: "status",
-          at: now,
-          by: get().currentScribe,
-          from: before.status,
-          to: status,
-        },
-      ],
     });
+
+    try {
+      const ev = await createEvent({
+        requestId: id,
+        kind: "status",
+        byName: get().currentScribe,
+        byUpn: get().currentUpn,
+        from: before.status,
+        to: status,
+      });
+      set({ events: [...get().events, ev] });
+    } catch {
+      /* non-fatal */
+    }
   },
 
-  addNote: (id, note) => {
+  addNote: async (id, note) => {
     if (!note.trim()) return;
+    const ev = await createEvent({
+      requestId: id,
+      kind: "note",
+      byName: get().currentScribe,
+      byUpn: get().currentUpn,
+      note: note.trim(),
+    });
     const now = new Date().toISOString();
     set({
-      events: [
-        ...get().events,
-        {
-          id: nextId(get().events),
-          requestId: id,
-          kind: "note",
-          at: now,
-          by: get().currentScribe,
-          note: note.trim(),
-        },
-      ],
+      events: [...get().events, ev],
       items: get().items.map((i) =>
         i.id === id ? { ...i, modified: now } : i
       ),
