@@ -10,6 +10,9 @@ type Tab = "Resolved" | "Archived" | "All";
 
 const Archive = () => {
   const items = usePrayerStore((s) => s.items);
+  const loading = usePrayerStore((s) => s.loading);
+  const loaded = usePrayerStore((s) => s.loaded);
+  const error = usePrayerStore((s) => s.error);
   const [tab, setTab] = useState<Tab>("Resolved");
 
   const visible = useMemo(() => {
@@ -54,7 +57,15 @@ const Archive = () => {
       </section>
 
       <main className="container-prose">
-        {visible.length === 0 ? (
+        {error ? (
+          <p className="text-center font-accent italic text-destructive py-16 text-lg">
+            Could not load the list: {error}
+          </p>
+        ) : !loaded && loading ? (
+          <p className="text-center font-accent italic text-muted-foreground py-16 text-lg">
+            Loading the archive…
+          </p>
+        ) : visible.length === 0 ? (
           <p className="text-center font-accent italic text-muted-foreground py-16 text-lg">
             Nothing here yet.
           </p>

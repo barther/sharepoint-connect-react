@@ -158,13 +158,22 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
     const before = get().items.find((i) => i.id === id);
     if (!before || before.status === status) return;
 
-    await patchRequest(id, { status });
+    // Optimistic — flip immediately so the UI feels instant, rollback if Graph rejects.
     const now = new Date().toISOString();
     set({
       items: get().items.map((i) =>
         i.id === id ? { ...i, status, modified: now } : i
       ),
     });
+
+    try {
+      await patchRequest(id, { status });
+    } catch (e) {
+      set({
+        items: get().items.map((i) => (i.id === id ? before : i)),
+      });
+      throw e;
+    }
 
     try {
       const ev = await createEvent({

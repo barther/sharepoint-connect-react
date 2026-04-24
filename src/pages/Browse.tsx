@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { usePrayerStore } from "@/lib/prayer-store";
 import { CATEGORIES, type PrayerCategory } from "@/lib/prayer-types";
 
-type SortMode = "Newest" | "Oldest" | "NameAsc" | "NameDesc";
+type SortMode = "Newest" | "RecentlyUpdated" | "Oldest" | "NameAsc" | "NameDesc";
 
 const Browse = () => {
   const items = usePrayerStore((s) => s.items);
@@ -34,6 +34,7 @@ const Browse = () => {
     const sorted = [...matched].sort((a, b) => {
       switch (sort) {
         case "Newest": return +new Date(b.created) - +new Date(a.created);
+        case "RecentlyUpdated": return +new Date(b.modified) - +new Date(a.modified);
         case "Oldest": return +new Date(a.created) - +new Date(b.created);
         case "NameAsc": return a.title.localeCompare(b.title);
         case "NameDesc": return b.title.localeCompare(a.title);
@@ -113,6 +114,7 @@ const Browse = () => {
                 className="w-full bg-card border border-foreground/25 focus:border-primary outline-none px-4 py-3 min-h-[48px] font-body text-base"
               >
                 <option value="Newest">Most recent</option>
+                <option value="RecentlyUpdated">Recently updated</option>
                 <option value="Oldest">Oldest first</option>
                 <option value="NameAsc">Name, A → Z</option>
                 <option value="NameDesc">Name, Z → A</option>

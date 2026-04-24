@@ -11,6 +11,8 @@ const Edit = () => {
   const navigate = useNavigate();
   const isNew = !id;
   const items = usePrayerStore((s) => s.items);
+  const loaded = usePrayerStore((s) => s.loaded);
+  const loading = usePrayerStore((s) => s.loading);
   const add = usePrayerStore((s) => s.add);
   const update = usePrayerStore((s) => s.update);
 
@@ -28,6 +30,25 @@ const Edit = () => {
   const [notes, setNotes] = useState(existing?.notes ?? "");
 
   const [saving, setSaving] = useState(false);
+
+  if (id && !existing) {
+    const stillLoading = !loaded && loading;
+    return (
+      <div className="min-h-screen">
+        <Masthead />
+        <div className="container-prose py-24 text-center">
+          <p className="font-display text-2xl">
+            {stillLoading ? "Loading the list…" : "This request could not be found."}
+          </p>
+          {!stillLoading && (
+            <Link to="/" className="font-accent italic text-primary mt-4 inline-block text-lg">
+              ← Return to the list
+            </Link>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const onSave = async (e: React.FormEvent) => {
     e.preventDefault();

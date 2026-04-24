@@ -1,0 +1,6 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/auth-popup.html", "/*.{css,js,ico,png,jpg,svg,webp,woff,woff2,json}"]
+  }
+}
