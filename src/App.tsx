@@ -7,6 +7,9 @@ import Browse from "./pages/Browse.tsx";
 import Detail from "./pages/Detail.tsx";
 import Edit from "./pages/Edit.tsx";
 import Archive from "./pages/Archive.tsx";
+import Wednesdays from "./pages/Wednesdays.tsx";
+import SnapshotView from "./pages/SnapshotView.tsx";
+import PrintView from "./pages/PrintView.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -20,6 +23,10 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Browse />} />
           <Route path="/archive" element={<Archive />} />
+          <Route path="/wednesdays" element={<Wednesdays />} />
+          <Route path="/wednesdays/:weekKey" element={<SnapshotView />} />
+          <Route path="/print" element={<PrintView />} />
+          <Route path="/print/:weekKey" element={<PrintView />} />
           <Route path="/request/new" element={<Edit />} />
           <Route path="/request/:id" element={<Detail />} />
           <Route path="/request/:id/edit" element={<Edit />} />

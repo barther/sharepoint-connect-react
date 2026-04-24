@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { Masthead } from "@/components/Masthead";
 import { Ornament } from "@/components/Ornament";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Timeline } from "@/components/Timeline";
 import { usePrayerStore } from "@/lib/prayer-store";
 import { toast } from "sonner";
 
@@ -11,9 +12,15 @@ const Detail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const item = usePrayerStore((s) => s.items.find((i) => i.id === Number(id)));
+  const events = usePrayerStore((s) =>
+    item ? s.events.filter((e) => e.requestId === item.id) : []
+  );
   const setStatus = usePrayerStore((s) => s.setStatus);
   const remove = usePrayerStore((s) => s.remove);
+  const addNote = usePrayerStore((s) => s.addNote);
+
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [noteDraft, setNoteDraft] = useState("");
 
   if (!item) {
     return (
@@ -31,6 +38,17 @@ const Detail = () => {
 
   const isInactive = item.status === "Resolved" || item.status === "Archived";
   const backTo = isInactive ? "/archive" : "/";
+
+  const sortedEvents = [...events].sort(
+    (a, b) => +new Date(b.at) - +new Date(a.at)
+  );
+
+  const onAddNote = () => {
+    if (!noteDraft.trim()) return;
+    addNote(item.id, noteDraft);
+    setNoteDraft("");
+    toast.success("Note added to the timeline.");
+  };
 
   return (
     <div className="min-h-screen">
@@ -93,7 +111,30 @@ const Detail = () => {
             {isInactive ? "Update details" : "Update request"}
           </Link>
 
-          {item.status === "Active" || item.status === "Ongoing" ? (
+          {item.status === "Active" && (
+            <button
+              onClick={() => {
+                setStatus(item.id, "Ongoing");
+                toast.success("Marked as ongoing.");
+              }}
+              className="btn-secondary w-full sm:w-auto"
+            >
+              Mark ongoing
+            </button>
+          )}
+          {item.status === "Ongoing" && (
+            <button
+              onClick={() => {
+                setStatus(item.id, "Active");
+                toast.success("Returned to the active list.");
+              }}
+              className="btn-secondary w-full sm:w-auto"
+            >
+              Return to active
+            </button>
+          )}
+
+          {(item.status === "Active" || item.status === "Ongoing") && (
             <>
               <button
                 onClick={() => {
@@ -115,7 +156,9 @@ const Detail = () => {
                 Archive
               </button>
             </>
-          ) : (
+          )}
+
+          {isInactive && (
             <button
               onClick={() => {
                 setStatus(item.id, "Active");
@@ -135,6 +178,44 @@ const Detail = () => {
             Delete permanently
           </button>
         </div>
+
+        {/* History */}
+        <section className="mt-14">
+          <div className="flex items-baseline justify-between gap-3 mb-1">
+            <h2 className="font-display text-2xl sm:text-3xl">A history</h2>
+            <span className="font-accent text-sm text-muted-foreground italic">
+              {sortedEvents.length} {sortedEvents.length === 1 ? "entry" : "entries"}
+            </span>
+          </div>
+          <p className="font-accent italic text-muted-foreground mb-6 text-base">
+            Every time someone touches this request, it lands here.
+          </p>
+
+          {/* Quick note — for "Susan called, service is at 11" sorts of updates */}
+          <div className="bg-card border border-foreground/20 p-4 sm:p-5 mb-7">
+            <label className="block">
+              <span className="eyebrow block mb-2">Add a note</span>
+              <textarea
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                rows={2}
+                placeholder="Susan called — service is Saturday at 11."
+                className="w-full bg-background border border-foreground/25 focus:border-primary outline-none p-3 font-body text-base sm:text-lg leading-relaxed resize-y"
+              />
+            </label>
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={onAddNote}
+                disabled={!noteDraft.trim()}
+                className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Add to history
+              </button>
+            </div>
+          </div>
+
+          <Timeline events={sortedEvents} />
+        </section>
       </article>
 
       {/* Confirm delete */}
@@ -149,7 +230,7 @@ const Detail = () => {
           >
             <h3 className="font-display text-2xl">Remove this request?</h3>
             <p className="font-body mt-3 text-foreground/85">
-              This permanently deletes the entry. The Wednesday bulletin will no longer reference it.
+              This permanently deletes the entry and its history. The Wednesday bulletin will no longer reference it.
             </p>
             <div className="flex flex-col-reverse sm:flex-row gap-3 mt-6 sm:justify-end">
               <button onClick={() => setConfirmDelete(false)} className="btn-secondary w-full sm:w-auto">
