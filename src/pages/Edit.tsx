@@ -21,7 +21,9 @@ const Edit = () => {
   const [category, setCategory] = useState<PrayerCategory>(existing?.category ?? "Healing");
   const [status, setStatus] = useState<PrayerStatus>(existing?.status ?? "Active");
   const [relationship, setRelationship] = useState(existing?.relationship ?? "");
-  const [dateSubmitted, setDateSubmitted] = useState(existing?.dateSubmitted ?? new Date().toISOString().slice(0, 10));
+  const [dateSubmitted, setDateSubmitted] = useState(
+    existing?.dateSubmitted ?? new Date().toISOString().slice(0, 10)
+  );
   const [address, setAddress] = useState(existing?.address ?? "");
   const [notes, setNotes] = useState(existing?.notes ?? "");
 
@@ -42,68 +44,63 @@ const Edit = () => {
     }
   };
 
+  const inputClass =
+    "w-full bg-card border border-foreground/25 focus:border-primary outline-none px-4 py-3 min-h-[48px] font-body text-lg";
+  const textareaClass =
+    "w-full bg-card border border-foreground/25 focus:border-primary outline-none p-4 font-body text-lg leading-relaxed resize-y";
+
   return (
     <div className="min-h-screen">
       <Masthead />
 
-      <form onSubmit={onSave} className="container-prose py-12">
+      <form onSubmit={onSave} className="container-prose py-8 sm:py-12">
         <Link
           to={existing ? `/request/${existing.id}` : "/"}
-          className="font-accent text-sm text-muted-foreground hover:text-primary inline-flex items-center gap-2"
+          className="font-accent text-base text-foreground/80 hover:text-primary inline-flex items-center gap-2 min-h-[44px]"
         >
-          <span aria-hidden>←</span> {existing ? "Cancel and return" : "Cancel"}
+          <span aria-hidden className="text-xl">←</span> {existing ? "Cancel and return" : "Cancel"}
         </Link>
 
-        <header className="mt-6 pb-4 border-b border-foreground/15">
+        <header className="mt-4 pb-4 border-b border-foreground/15">
           <p className="eyebrow">{isNew ? "A new entry" : "Editing"}</p>
           <h1 className="font-display mt-2">{isNew ? "New Prayer Request" : title || "Edit request"}</h1>
         </header>
 
         <div className="mt-8 space-y-7">
-          <Field label="For whom or what">
+          <Field label="For whom or what *" hint="The person, family, or situation you're praying for.">
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Margaret Ellison, or The Wheeler family"
-              className="w-full bg-transparent border-0 border-b border-foreground/30 focus:border-primary outline-none py-2 font-display text-2xl"
+              className={`${inputClass} font-display text-2xl py-3`}
             />
           </Field>
 
-          <Field label="The request">
-            <textarea
-              value={request}
-              onChange={(e) => setRequest(e.target.value)}
-              rows={6}
-              placeholder="A few sentences describing how the congregation can pray…"
-              className="w-full bg-surface-sunken/60 border border-foreground/20 focus:border-primary outline-none p-4 font-body leading-relaxed resize-y"
-            />
+          <Field label="The request *" hint="A few sentences the prayer team can read aloud.">
+            <textarea value={request} onChange={(e) => setRequest(e.target.value)} rows={6} className={textareaClass} />
           </Field>
 
-          <div className="grid sm:grid-cols-2 gap-7">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <Field label="Category">
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as PrayerCategory)}
-                className="w-full bg-transparent border-0 border-b border-foreground/30 focus:border-primary outline-none py-2 font-body"
+                className={inputClass}
               >
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </Field>
             <Field label="Status">
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as PrayerStatus)}
-                className="w-full bg-transparent border-0 border-b border-foreground/30 focus:border-primary outline-none py-2 font-body"
-              >
+              <select value={status} onChange={(e) => setStatus(e.target.value as PrayerStatus)} className={inputClass}>
                 {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>
-            <Field label="Relationship (optional)">
+            <Field label="Relationship" hint="Optional.">
               <input
                 value={relationship}
                 onChange={(e) => setRelationship(e.target.value)}
                 placeholder="Member · Family · Visitor"
-                className="w-full bg-transparent border-0 border-b border-foreground/30 focus:border-primary outline-none py-2 font-body"
+                className={inputClass}
               />
             </Field>
             <Field label="Date submitted">
@@ -111,47 +108,34 @@ const Edit = () => {
                 type="date"
                 value={dateSubmitted}
                 onChange={(e) => setDateSubmitted(e.target.value)}
-                className="w-full bg-transparent border-0 border-b border-foreground/30 focus:border-primary outline-none py-2 font-body"
+                className={inputClass}
               />
             </Field>
           </div>
 
           <Ornament className="my-2" />
 
-          <Field label="Address (optional)">
-            <textarea
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              rows={2}
-              className="w-full bg-transparent border-0 border-b border-foreground/30 focus:border-primary outline-none py-2 font-body resize-y"
-            />
+          <Field label="Address" hint="Optional. For cards or visits.">
+            <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} className={textareaClass} />
           </Field>
 
-          <Field label="Pastoral notes (optional)">
+          <Field label="Pastoral notes" hint="Visible to leadership only.">
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              placeholder="Visible to leadership only."
-              className="w-full bg-surface-sunken/60 border border-foreground/20 focus:border-primary outline-none p-4 font-accent italic leading-relaxed resize-y"
+              className={`${textareaClass} font-accent italic`}
             />
           </Field>
         </div>
 
         <hr className="rule my-10" />
 
-        <div className="flex items-center gap-3 justify-end">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="font-accent text-sm text-muted-foreground hover:text-foreground px-4 py-2"
-          >
+        <div className="flex flex-col-reverse sm:flex-row gap-3 sm:items-center sm:justify-end">
+          <button type="button" onClick={() => navigate(-1)} className="btn-secondary w-full sm:w-auto">
             Cancel
           </button>
-          <button
-            type="submit"
-            className="font-accent text-sm bg-primary text-primary-foreground px-6 py-2 hover:bg-primary/90 transition-colors"
-          >
+          <button type="submit" className="btn-primary w-full sm:w-auto">
             {isNew ? "Add to the list" : "Save changes"}
           </button>
         </div>
@@ -160,10 +144,19 @@ const Edit = () => {
   );
 };
 
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+const Field = ({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) => (
   <label className="block">
-    <span className="eyebrow block mb-1">{label}</span>
+    <span className="eyebrow block mb-2">{label}</span>
     {children}
+    {hint && <span className="block font-accent italic text-sm text-muted-foreground mt-1.5">{hint}</span>}
   </label>
 );
 
