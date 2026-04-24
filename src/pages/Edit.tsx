@@ -27,20 +27,30 @@ const Edit = () => {
   const [address, setAddress] = useState(existing?.address ?? "");
   const [notes, setNotes] = useState(existing?.notes ?? "");
 
-  const onSave = (e: React.FormEvent) => {
+  const [saving, setSaving] = useState(false);
+
+  const onSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !request.trim()) {
       toast.error("Please give the request a name and a description.");
       return;
     }
-    if (isNew) {
-      const created = add({ title, request, category, status, relationship, dateSubmitted, address, notes });
-      toast.success("Request added to the list.");
-      navigate(`/request/${created.id}`);
-    } else if (existing) {
-      update(existing.id, { title, request, category, status, relationship, dateSubmitted, address, notes });
-      toast.success("Request updated.");
-      navigate(`/request/${existing.id}`);
+    setSaving(true);
+    try {
+      if (isNew) {
+        const created = await add({ title, request, category, status, relationship, dateSubmitted, address, notes });
+        toast.success("Request added to the list.");
+        navigate(`/request/${created.id}`);
+      } else if (existing) {
+        await update(existing.id, { title, request, category, status, relationship, dateSubmitted, address, notes });
+        toast.success("Request updated.");
+        navigate(`/request/${existing.id}`);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Save failed.";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -135,8 +145,8 @@ const Edit = () => {
           <button type="button" onClick={() => navigate(-1)} className="btn-secondary w-full sm:w-auto">
             Cancel
           </button>
-          <button type="submit" className="btn-primary w-full sm:w-auto">
-            {isNew ? "Add to the list" : "Save changes"}
+          <button type="submit" disabled={saving} className="btn-primary w-full sm:w-auto disabled:opacity-50">
+            {saving ? "Saving…" : isNew ? "Add to the list" : "Save changes"}
           </button>
         </div>
       </form>
