@@ -3,6 +3,7 @@ import {
   type Configuration,
   type AccountInfo,
   InteractionRequiredAuthError,
+  EventType,
 } from "@azure/msal-browser";
 
 // Single-tenant app — see mem://entra/app-registration.md
@@ -24,6 +25,37 @@ export const msalConfig: Configuration = {
 };
 
 export const msalInstance = new PublicClientApplication(msalConfig);
+
+// Promise that resolves once MSAL is initialized and any pending redirect has
+// been processed. Must be awaited before rendering anything that uses MSAL.
+export const msalReady: Promise<void> = (async () => {
+  await msalInstance.initialize();
+
+  // If we just came back from a redirect-flow login, this picks up the result.
+  const redirectResult = await msalInstance.handleRedirectPromise();
+  if (redirectResult?.account) {
+    msalInstance.setActiveAccount(redirectResult.account);
+  }
+
+  // Make sure an active account is set whenever accounts exist (cache restore).
+  if (!msalInstance.getActiveAccount()) {
+    const all = msalInstance.getAllAccounts();
+    if (all.length > 0) msalInstance.setActiveAccount(all[0]);
+  }
+
+  // Keep the active account in sync as logins/logouts happen.
+  msalInstance.addEventCallback((event) => {
+    if (
+      (event.eventType === EventType.LOGIN_SUCCESS ||
+        event.eventType === EventType.ACQUIRE_TOKEN_SUCCESS) &&
+      event.payload &&
+      "account" in event.payload &&
+      event.payload.account
+    ) {
+      msalInstance.setActiveAccount(event.payload.account as AccountInfo);
+    }
+  });
+})();
 
 // Silent-then-popup token acquisition for Graph.
 export async function acquireGraphToken(account: AccountInfo): Promise<string> {
