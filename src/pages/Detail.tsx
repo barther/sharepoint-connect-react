@@ -15,6 +15,8 @@ const Detail = () => {
   const events = usePrayerStore((s) =>
     item ? s.events.filter((e) => e.requestId === item.id) : []
   );
+  const loaded = usePrayerStore((s) => s.loaded);
+  const loading = usePrayerStore((s) => s.loading);
   const setStatus = usePrayerStore((s) => s.setStatus);
   const remove = usePrayerStore((s) => s.remove);
   const addNote = usePrayerStore((s) => s.addNote);
@@ -23,14 +25,19 @@ const Detail = () => {
   const [noteDraft, setNoteDraft] = useState("");
 
   if (!item) {
+    const stillLoading = !loaded && loading;
     return (
       <div className="min-h-screen">
         <Masthead />
         <div className="container-prose py-24 text-center">
-          <p className="font-display text-2xl">This request could not be found.</p>
-          <Link to="/" className="font-accent italic text-primary mt-4 inline-block text-lg">
-            ← Return to the list
-          </Link>
+          <p className="font-display text-2xl">
+            {stillLoading ? "Loading the list…" : "This request could not be found."}
+          </p>
+          {!stillLoading && (
+            <Link to="/" className="font-accent italic text-primary mt-4 inline-block text-lg">
+              ← Return to the list
+            </Link>
+          )}
         </div>
       </div>
     );
