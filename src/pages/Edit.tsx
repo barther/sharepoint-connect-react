@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Masthead } from "@/components/Masthead";
 import { Ornament } from "@/components/Ornament";
@@ -30,6 +30,18 @@ const Edit = () => {
   const [notes, setNotes] = useState(existing?.notes ?? "");
 
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!existing) return;
+    setTitle(existing.title);
+    setRequest(existing.request);
+    setCategory(existing.category);
+    setStatus(existing.status);
+    setRelationship(existing.relationship ?? "");
+    setDateSubmitted(existing.dateSubmitted);
+    setAddress(existing.address ?? "");
+    setNotes(existing.notes ?? "");
+  }, [existing]);
 
   if (id && !existing) {
     const stillLoading = !loaded && loading;
