@@ -11,6 +11,9 @@ type SortMode = "Newest" | "Oldest" | "NameAsc" | "NameDesc";
 
 const Browse = () => {
   const items = usePrayerStore((s) => s.items);
+  const loading = usePrayerStore((s) => s.loading);
+  const loaded = usePrayerStore((s) => s.loaded);
+  const error = usePrayerStore((s) => s.error);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("Newest");
   const [categoryFilter, setCategoryFilter] = useState<PrayerCategory | "All">("All");
@@ -124,7 +127,15 @@ const Browse = () => {
 
       {/* Entries */}
       <main className="container-prose">
-        {visible.length === 0 ? (
+        {error ? (
+          <p className="text-center font-accent italic text-destructive py-16 text-lg">
+            Could not load the list: {error}
+          </p>
+        ) : !loaded && loading ? (
+          <p className="text-center font-accent italic text-muted-foreground py-16 text-lg">
+            Loading the list…
+          </p>
+        ) : visible.length === 0 ? (
           <p className="text-center font-accent italic text-muted-foreground py-16 text-lg">
             No requests match your search.
           </p>
