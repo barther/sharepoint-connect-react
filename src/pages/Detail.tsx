@@ -43,11 +43,25 @@ const Detail = () => {
     (a, b) => +new Date(b.at) - +new Date(a.at)
   );
 
-  const onAddNote = () => {
+  const onAddNote = async () => {
     if (!noteDraft.trim()) return;
-    addNote(item.id, noteDraft);
-    setNoteDraft("");
-    toast.success("Note added to the timeline.");
+    try {
+      await addNote(item.id, noteDraft);
+      setNoteDraft("");
+      toast.success("Note added to the timeline.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not add note.");
+    }
+  };
+
+  const doStatus = async (next: typeof item.status, msg: string, after?: () => void) => {
+    try {
+      await setStatus(item.id, next);
+      toast.success(msg);
+      after?.();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not update status.");
+    }
   };
 
   return (
@@ -113,10 +127,7 @@ const Detail = () => {
 
           {item.status === "Active" && (
             <button
-              onClick={() => {
-                setStatus(item.id, "Ongoing");
-                toast.success("Marked as ongoing.");
-              }}
+              onClick={() => doStatus("Ongoing", "Marked as ongoing.")}
               className="btn-secondary w-full sm:w-auto"
             >
               Mark ongoing
@@ -124,10 +135,7 @@ const Detail = () => {
           )}
           {item.status === "Ongoing" && (
             <button
-              onClick={() => {
-                setStatus(item.id, "Active");
-                toast.success("Returned to the active list.");
-              }}
+              onClick={() => doStatus("Active", "Returned to the active list.")}
               className="btn-secondary w-full sm:w-auto"
             >
               Return to active
@@ -137,20 +145,13 @@ const Detail = () => {
           {(item.status === "Active" || item.status === "Ongoing") && (
             <>
               <button
-                onClick={() => {
-                  setStatus(item.id, "Resolved");
-                  toast.success("Marked as resolved with thanksgiving.");
-                }}
+                onClick={() => doStatus("Resolved", "Marked as resolved with thanksgiving.")}
                 className="btn-secondary w-full sm:w-auto"
               >
                 ✓ Mark resolved
               </button>
               <button
-                onClick={() => {
-                  setStatus(item.id, "Archived");
-                  toast.success("Moved to the archive.");
-                  navigate("/archive");
-                }}
+                onClick={() => doStatus("Archived", "Moved to the archive.", () => navigate("/archive"))}
                 className="btn-secondary w-full sm:w-auto"
               >
                 Archive
@@ -160,11 +161,7 @@ const Detail = () => {
 
           {isInactive && (
             <button
-              onClick={() => {
-                setStatus(item.id, "Active");
-                toast.success("Restored to the current list.");
-                navigate("/");
-              }}
+              onClick={() => doStatus("Active", "Restored to the current list.", () => navigate("/"))}
               className="btn-secondary w-full sm:w-auto"
             >
               Restore to list
@@ -237,10 +234,14 @@ const Detail = () => {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  remove(item.id);
-                  toast.success("Request removed.");
-                  navigate("/");
+                onClick={async () => {
+                  try {
+                    await remove(item.id);
+                    toast.success("Request removed.");
+                    navigate("/");
+                  } catch (e: unknown) {
+                    toast.error(e instanceof Error ? e.message : "Delete failed.");
+                  }
                 }}
                 className="btn-danger w-full sm:w-auto"
               >

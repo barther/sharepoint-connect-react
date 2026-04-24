@@ -1,9 +1,18 @@
 import { Link, useLocation } from "react-router-dom";
 import { format } from "date-fns";
+import { useMsal } from "@azure/msal-react";
 
 export const Masthead = () => {
   const { pathname } = useLocation();
+  const { instance, accounts } = useMsal();
   const today = format(new Date(), "EEEE, MMMM d, yyyy");
+  const account = accounts[0];
+
+  const onSignOut = () => {
+    instance.logoutPopup({ postLogoutRedirectUri: window.location.origin }).catch(() => {
+      /* user dismissed */
+    });
+  };
 
   return (
     <header className="border-b border-foreground/15 bg-background">
@@ -34,6 +43,16 @@ export const Masthead = () => {
             <span className="text-primary font-bold mr-1">＋</span>
             <span>New</span>
           </NavLink>
+          {account && (
+            <button
+              onClick={onSignOut}
+              title={account.username}
+              className="font-accent text-sm py-3 sm:py-2 px-2 sm:px-4 min-h-[48px] flex items-center justify-center sm:justify-start sm:ml-auto text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span className="hidden sm:inline italic mr-2">{account.name ?? account.username}</span>
+              <span>Sign out</span>
+            </button>
+          )}
         </nav>
       </div>
     </header>
