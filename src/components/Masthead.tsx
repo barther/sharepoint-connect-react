@@ -29,9 +29,6 @@ export const Masthead = () => {
         {/* Nav — large tap targets, stacks evenly on phone */}
         <nav className="grid grid-cols-2 sm:flex sm:items-center sm:gap-2">
           <NavLink to="/" active={pathname === "/"}>Current</NavLink>
-          <NavLink to="/wednesdays" active={pathname.startsWith("/wednesdays") || pathname.startsWith("/print")}>
-            Wednesdays
-          </NavLink>
           <NavLink to="/archive" active={pathname.startsWith("/archive")}>Past</NavLink>
           <NavLink to="/request/new" active={pathname === "/request/new"}>
             <span className="text-primary font-bold mr-1">＋</span>
