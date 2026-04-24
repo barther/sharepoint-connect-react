@@ -9,6 +9,7 @@ import {
 // Single-tenant app — see mem://entra/app-registration.md
 const TENANT_ID = "a0c55473-8feb-4453-9a3c-cab3de852125";
 const CLIENT_ID = "746131b5-f33f-4df8-a4c0-5ccc08ca52c4";
+const POPUP_REDIRECT_URI = `${window.location.origin}/auth-popup.html`;
 
 export const GRAPH_SCOPES = ["Sites.ReadWrite.All"];
 
@@ -16,7 +17,9 @@ export const msalConfig: Configuration = {
   auth: {
     clientId: CLIENT_ID,
     authority: `https://login.microsoftonline.com/${TENANT_ID}`,
-    redirectUri: window.location.origin,
+    // For popup flows, redirect to a lightweight static page so the React app
+    // does not boot inside the popup and interfere with MSAL's response hash.
+    redirectUri: POPUP_REDIRECT_URI,
     postLogoutRedirectUri: window.location.origin,
   },
   cache: {
