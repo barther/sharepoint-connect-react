@@ -5,22 +5,7 @@ import type {
   PrayerStatus,
   PrayerEvent,
   PrayerEventKind,
-  WeeklySnapshot,
 } from "./prayer-types";
-
-// ---------- Helpers ----------
-
-// ISO week number — used to label snapshots ("2026-W17") so a Wednesday print
-// is uniquely keyed regardless of timezone wobble.
-const isoWeekOf = (d: Date): { year: number; week: number; key: string } => {
-  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const day = t.getUTCDay() || 7;
-  t.setUTCDate(t.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((+t - +yearStart) / 86400000) + 1) / 7);
-  const year = t.getUTCFullYear();
-  return { year, week, key: `${year}-W${String(week).padStart(2, "0")}` };
-};
 
 // ---------- Seed data ----------
 
@@ -179,39 +164,11 @@ const seedEvents: PrayerEvent[] = [
   { id: 19, requestId: 10, kind: "status", at: "2026-01-15T10:00:00Z", by: "Pastor John", from: "Active", to: "Archived" },
 ];
 
-// A couple seed snapshots so the "Past Wednesdays" list isn't empty.
-const snapshotItems = (items: PrayerRequest[]) =>
-  items
-    .filter((i) => i.status === "Active" || i.status === "Ongoing")
-    .map(({ id, title, request, category, status, relationship, dateSubmitted }) => ({
-      id, title, request, category, status, relationship, dateSubmitted,
-    }));
-
-const seedSnapshots: WeeklySnapshot[] = [
-  {
-    id: "2026-W16",
-    printedOn: "2026-04-15T07:30:00Z",
-    printedBy: "Linda M.",
-    isoYear: 2026,
-    isoWeek: 16,
-    items: snapshotItems(seed).slice(0, 6),
-  },
-  {
-    id: "2026-W15",
-    printedOn: "2026-04-08T07:25:00Z",
-    printedBy: "Linda M.",
-    isoYear: 2026,
-    isoWeek: 15,
-    items: snapshotItems(seed).slice(0, 5),
-  },
-];
-
 // ---------- Store ----------
 
 interface PrayerStore {
   items: PrayerRequest[];
   events: PrayerEvent[];
-  snapshots: WeeklySnapshot[];
 
   // Identity of the current scribe — replaced by MSAL claims later.
   currentScribe: string;
@@ -225,9 +182,6 @@ interface PrayerStore {
   addNote: (id: number, note: string) => void;
 
   eventsFor: (id: number) => PrayerEvent[];
-
-  takeSnapshot: () => WeeklySnapshot;
-  snapshotFor: (key: string) => WeeklySnapshot | undefined;
 }
 
 const nextId = (xs: { id: number }[]) =>
@@ -236,7 +190,6 @@ const nextId = (xs: { id: number }[]) =>
 export const usePrayerStore = create<PrayerStore>((set, get) => ({
   items: seed,
   events: seedEvents,
-  snapshots: seedSnapshots,
   currentScribe: "You",
 
   add: (p) => {
@@ -356,28 +309,6 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
     get()
       .events.filter((e) => e.requestId === id)
       .sort((a, b) => +new Date(b.at) - +new Date(a.at)),
-
-  takeSnapshot: () => {
-    const now = new Date();
-    const { year, week, key } = isoWeekOf(now);
-    const existing = get().snapshots.find((s) => s.id === key);
-    const snap: WeeklySnapshot = {
-      id: key,
-      printedOn: now.toISOString(),
-      printedBy: get().currentScribe,
-      isoYear: year,
-      isoWeek: week,
-      items: snapshotItems(get().items),
-    };
-    set({
-      snapshots: existing
-        ? get().snapshots.map((s) => (s.id === key ? snap : s))
-        : [snap, ...get().snapshots],
-    });
-    return snap;
-  },
-
-  snapshotFor: (key) => get().snapshots.find((s) => s.id === key),
 }));
 
 export type { PrayerRequest, PrayerCategory, PrayerStatus };

@@ -45,21 +45,6 @@ export interface PrayerEvent {
   note?: string;
 }
 
-// Frozen weekly snapshot — what the printed sheet looked like that Wednesday.
-// In SharePoint this maps to a "WeeklySnapshots" list with a JSON payload column.
-export interface WeeklySnapshot {
-  id: string;          // e.g. "2026-W17"
-  printedOn: string;   // ISO datetime
-  printedBy: string;
-  isoYear: number;
-  isoWeek: number;
-  // We snapshot the request rows we care about printing — a literal photograph.
-  items: Array<Pick<
-    PrayerRequest,
-    "id" | "title" | "request" | "category" | "status" | "relationship" | "dateSubmitted"
-  >>;
-}
-
 export const STATUSES: PrayerStatus[] = ["Active", "Ongoing", "Resolved", "Archived"];
 export const CATEGORIES: PrayerCategory[] = [
   "Member",
