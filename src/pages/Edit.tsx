@@ -18,7 +18,7 @@ const Edit = () => {
 
   const [title, setTitle] = useState(existing?.title ?? "");
   const [request, setRequest] = useState(existing?.request ?? "");
-  const [category, setCategory] = useState<PrayerCategory>(existing?.category ?? "Healing");
+  const [category, setCategory] = useState<PrayerCategory>(existing?.category ?? "Member");
   const [status, setStatus] = useState<PrayerStatus>(existing?.status ?? "Active");
   const [relationship, setRelationship] = useState(existing?.relationship ?? "");
   const [dateSubmitted, setDateSubmitted] = useState(

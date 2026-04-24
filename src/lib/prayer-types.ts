@@ -1,14 +1,14 @@
 // Types matching the SharePoint "Prayer Requests" list schema from PrayerList_final.msapp
 export type PrayerStatus = "Active" | "Ongoing" | "Resolved" | "Archived";
 
+// Categories are RELATIONAL (not topical) and match the SharePoint
+// "Prayer Requests" list Category choice column exactly.
 export type PrayerCategory =
-  | "Healing"
-  | "Family"
-  | "Grief"
-  | "Thanksgiving"
-  | "Guidance"
-  | "Community"
-  | "Other";
+  | "Member"
+  | "Family or Friend"
+  | "Text-in request"
+  | "Homebound member"
+  | "Nation or World";
 
 export interface PrayerRequest {
   id: number;
@@ -62,11 +62,9 @@ export interface WeeklySnapshot {
 
 export const STATUSES: PrayerStatus[] = ["Active", "Ongoing", "Resolved", "Archived"];
 export const CATEGORIES: PrayerCategory[] = [
-  "Healing",
-  "Family",
-  "Grief",
-  "Thanksgiving",
-  "Guidance",
-  "Community",
-  "Other",
+  "Member",
+  "Family or Friend",
+  "Text-in request",
+  "Homebound member",
+  "Nation or World",
 ];
