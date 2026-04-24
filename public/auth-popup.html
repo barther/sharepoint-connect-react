@@ -15,6 +15,67 @@
         color: #444;
       }
     </style>
+    <script>
+      const base64UrlDecode = (value) => {
+        const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+        const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+        return decodeURIComponent(
+          atob(padded)
+            .split("")
+            .map((char) => `%${char.charCodeAt(0).toString(16).padStart(2, "0")}`)
+            .join("")
+        );
+      };
+
+      const extractAuthPayload = () => {
+        const hash = window.location.hash.startsWith("#")
+          ? window.location.hash.slice(1)
+          : window.location.hash;
+        const query = window.location.search.startsWith("?")
+          ? window.location.search.slice(1)
+          : window.location.search;
+
+        const hashParams = new URLSearchParams(hash);
+        const queryParams = new URLSearchParams(query);
+
+        if (hashParams.has("state") && queryParams.has("state")) {
+          return `${query}${hash}`;
+        }
+        if (queryParams.has("state")) return query;
+        if (hashParams.has("state")) return hash;
+        return "";
+      };
+
+      const bridgePopupResponse = () => {
+        try {
+          const payload = extractAuthPayload();
+          if (!payload) return;
+
+          const params = new URLSearchParams(payload);
+          const state = params.get("state");
+          if (!state) return;
+
+          const [libraryState] = state.split("|");
+          const { id } = JSON.parse(base64UrlDecode(libraryState));
+          if (!id) return;
+
+          const channel = new BroadcastChannel(id);
+          channel.postMessage({ v: 1, payload });
+          channel.close();
+
+          if (typeof window.history.replaceState === "function") {
+            window.history.replaceState(null, "", window.location.pathname);
+          }
+
+          window.close();
+        } catch {
+          // Leave the status text visible if parsing fails so the popup
+          // still gives a stable fallback instead of crashing.
+        }
+      };
+
+      window.addEventListener("load", bridgePopupResponse);
+    </script>
   </head>
   <body>
     <p>Completing sign-in…</p>
