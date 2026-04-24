@@ -17,6 +17,13 @@ export const EVENTS_LIST_ID = "4140d627-0b20-482d-be5c-3cd3fa85ca14";
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 
+function toIsoDate(input?: string): string | undefined {
+  if (!input) return undefined;
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return d.toISOString();
+}
+
 async function token(): Promise<string> {
   const account = msalInstance.getActiveAccount() ?? msalInstance.getAllAccounts()[0];
   if (!account) throw new Error("Not signed in");
@@ -108,7 +115,7 @@ export async function createRequest(
     Category: p.category,
     Status: p.status,
     Relationship: p.relationship,
-    DateSubmitted: new Date(p.dateSubmitted).toISOString(),
+    DateSubmitted: toIsoDate(p.dateSubmitted),
     Address: p.address,
     Notes: p.notes,
   };
@@ -129,8 +136,9 @@ export async function patchRequest(
   if (patch.category !== undefined) fields.Category = patch.category;
   if (patch.status !== undefined) fields.Status = patch.status;
   if (patch.relationship !== undefined) fields.Relationship = patch.relationship;
-  if (patch.dateSubmitted !== undefined)
-    fields.DateSubmitted = new Date(patch.dateSubmitted).toISOString();
+  if (patch.dateSubmitted !== undefined) {
+    fields.DateSubmitted = toIsoDate(patch.dateSubmitted);
+  }
   if (patch.address !== undefined) fields.Address = patch.address;
   if (patch.notes !== undefined) fields.Notes = patch.notes;
 

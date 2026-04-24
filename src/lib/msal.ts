@@ -23,7 +23,11 @@ export const msalConfig: Configuration = {
     postLogoutRedirectUri: window.location.origin,
   },
   cache: {
-    cacheLocation: "sessionStorage",
+    // Persist auth/session state across tab closes and browser restarts.
+    cacheLocation: "localStorage",
+    // Use cookies as a backup for auth state to reduce repeated prompts in
+    // restrictive browser environments.
+    storeAuthStateInCookie: true,
   },
 };
 
