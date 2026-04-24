@@ -5,22 +5,7 @@ import type {
   PrayerStatus,
   PrayerEvent,
   PrayerEventKind,
-  WeeklySnapshot,
 } from "./prayer-types";
-
-// ---------- Helpers ----------
-
-// ISO week number — used to label snapshots ("2026-W17") so a Wednesday print
-// is uniquely keyed regardless of timezone wobble.
-const isoWeekOf = (d: Date): { year: number; week: number; key: string } => {
-  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const day = t.getUTCDay() || 7;
-  t.setUTCDate(t.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((+t - +yearStart) / 86400000) + 1) / 7);
-  const year = t.getUTCFullYear();
-  return { year, week, key: `${year}-W${String(week).padStart(2, "0")}` };
-};
 
 // ---------- Seed data ----------
 
