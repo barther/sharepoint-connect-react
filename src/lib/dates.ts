@@ -34,3 +34,24 @@ export const safeTime = (input: string | number | Date | undefined | null): numb
   const d = toValidDate(input);
   return d ? d.getTime() : 0;
 };
+
+// Whole days between `input` and now. Negative or zero if the input is missing
+// or in the future — never NaN.
+export const daysSince = (input: string | number | Date | undefined | null): number => {
+  const t = safeTime(input);
+  if (!t) return 0;
+  return Math.max(0, Math.floor((Date.now() - t) / (1000 * 60 * 60 * 24)));
+};
+
+// Short, scannable age label: "12d", "8mo", "1y", "1y 4mo".
+export const shortAge = (days: number): string => {
+  if (days < 30) return `${days}d`;
+  if (days < 365) return `${Math.floor(days / 30)}mo`;
+  const y = Math.floor(days / 365);
+  const m = Math.floor((days % 365) / 30);
+  return m === 0 ? `${y}y` : `${y}y ${m}mo`;
+};
+
+// 6 months — the threshold above which a request is "stale" enough that the
+// app surfaces its age and includes it in the cleanup banner.
+export const STALE_DAYS = 180;

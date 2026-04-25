@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Masthead } from "@/components/Masthead";
-import { safeDistance, safeFormat, safeTime } from "@/lib/dates";
+import { safeDistance, safeFormat, safeTime, daysSince, shortAge, STALE_DAYS } from "@/lib/dates";
 import { StatusBadge } from "@/components/StatusBadge";
 import { usePrayerStore } from "@/lib/prayer-store";
 import { CATEGORIES, type PrayerCategory } from "@/lib/prayer-types";
 
-type SortMode = "Newest" | "RecentlyUpdated" | "Oldest" | "NameAsc" | "NameDesc";
+type SortMode = "Newest" | "RecentlyUpdated" | "LongestOnList" | "Oldest" | "NameAsc" | "NameDesc";
 
 const inputClass =
   "w-full bg-card border border-foreground/25 focus:border-primary outline-none rounded-lg px-4 py-3 min-h-[48px] text-base";
@@ -37,6 +37,7 @@ const Browse = () => {
       switch (sort) {
         case "Newest": return safeTime(b.created) - safeTime(a.created);
         case "RecentlyUpdated": return safeTime(b.modified) - safeTime(a.modified);
+        case "LongestOnList": return safeTime(a.dateSubmitted) - safeTime(b.dateSubmitted);
         case "Oldest": return safeTime(a.created) - safeTime(b.created);
         case "NameAsc": return a.title.localeCompare(b.title);
         case "NameDesc": return b.title.localeCompare(a.title);
@@ -49,6 +50,16 @@ const Browse = () => {
     Active: items.filter((i) => i.status === "Active").length,
     Ongoing: items.filter((i) => i.status === "Ongoing").length,
   }), [items]);
+
+  const staleCount = useMemo(
+    () =>
+      items.filter(
+        (i) =>
+          (i.status === "Active" || i.status === "Ongoing") &&
+          daysSince(i.dateSubmitted) >= STALE_DAYS
+      ).length,
+    [items]
+  );
 
   const filtersActive = categoryFilter !== "All" || sort !== "Newest";
 
@@ -112,6 +123,7 @@ const Browse = () => {
               >
                 <option value="Newest">Most recent</option>
                 <option value="RecentlyUpdated">Recently updated</option>
+                <option value="LongestOnList">Longest on the list</option>
                 <option value="Oldest">Oldest first</option>
                 <option value="NameAsc">Name, A → Z</option>
                 <option value="NameDesc">Name, Z → A</option>
@@ -120,6 +132,25 @@ const Browse = () => {
           </div>
         </div>
       </section>
+
+      {/* Cleanup nudge — only when there are old active items */}
+      {staleCount > 0 && (
+        <section className="container-wide pb-2">
+          <div className="flex items-center justify-between gap-3 bg-card border border-foreground/15 rounded-lg p-3 sm:p-4">
+            <p className="text-sm sm:text-base">
+              <span className="font-semibold">{staleCount}</span>{" "}
+              {staleCount === 1 ? "request has" : "requests have"} been on the list over 6 months.
+            </p>
+            <button
+              type="button"
+              onClick={() => setSort("LongestOnList")}
+              className="text-primary font-medium text-sm whitespace-nowrap hover:underline underline-offset-4"
+            >
+              Show longest first →
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Entries */}
       <main className="container-wide">
@@ -137,7 +168,10 @@ const Browse = () => {
           </p>
         ) : (
           <ul className="divide-y divide-foreground/15">
-            {visible.map((item) => (
+            {visible.map((item) => {
+              const age = daysSince(item.dateSubmitted);
+              const stale = age >= STALE_DAYS;
+              return (
               <li key={item.id}>
                 <Link
                   to={`/request/${item.id}`}
@@ -152,6 +186,11 @@ const Browse = () => {
                       <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
                         {item.category}
                       </span>
+                      {stale && (
+                        <span className="text-sm text-primary/85 font-medium tabular-nums">
+                          {shortAge(age)} on list
+                        </span>
+                      )}
                       <span className="text-sm text-muted-foreground tabular-nums">
                         Submitted {safeFormat(item.dateSubmitted, "MMM d, yyyy")}
                       </span>
@@ -176,7 +215,8 @@ const Browse = () => {
                   </span>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </main>
