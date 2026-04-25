@@ -2,8 +2,7 @@ import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Route, Routes } from "react-router-dom";
 import { MsalProvider, useMsal } from "@azure/msal-react";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { msalInstance } from "@/lib/msal";
 import { AuthGate } from "@/components/AuthGate";
@@ -43,7 +42,6 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Sonner />
         <HashRouter>
           <ScrollToTop />
           <ErrorBoundary>
