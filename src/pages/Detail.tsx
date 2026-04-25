@@ -200,7 +200,7 @@ const Detail = () => {
                 value={noteDraft}
                 onChange={(e) => setNoteDraft(e.target.value)}
                 rows={2}
-                placeholder="Susan called — service is Saturday at 11."
+                placeholder="What's the update?"
                 className="w-full bg-background border border-foreground/25 focus:border-primary outline-none rounded-lg p-3 text-base sm:text-lg leading-relaxed resize-y"
               />
             </label>
