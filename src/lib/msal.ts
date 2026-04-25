@@ -24,10 +24,8 @@ export const msalConfig: Configuration = {
   },
   cache: {
     // Persist auth/session state across tab closes and browser restarts.
+    // Note: `storeAuthStateInCookie` was removed in @azure/msal-browser v5.
     cacheLocation: "localStorage",
-    // Use cookies as a backup for auth state to reduce repeated prompts in
-    // restrictive browser environments.
-    storeAuthStateInCookie: true,
   },
 };
 
