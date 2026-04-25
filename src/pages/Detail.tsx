@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Masthead } from "@/components/Masthead";
 import { safeFormat, safeTime } from "@/lib/dates";
@@ -12,9 +12,10 @@ const Detail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const item = usePrayerStore((s) => s.items.find((i) => i.id === Number(id)));
-  const events = usePrayerStore((s) =>
-    item ? s.events.filter((e) => e.requestId === item.id) : []
-  );
+  // Subscribe to the raw events array — `.filter()` inside a selector returns a
+  // new reference every render, which Zustand reads as a state change and loops
+  // (React error #185).
+  const allEvents = usePrayerStore((s) => s.events);
   const loaded = usePrayerStore((s) => s.loaded);
   const loading = usePrayerStore((s) => s.loading);
   const setStatus = usePrayerStore((s) => s.setStatus);
@@ -23,6 +24,13 @@ const Detail = () => {
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
+
+  const sortedEvents = useMemo(() => {
+    if (!item) return [];
+    return allEvents
+      .filter((e) => e.requestId === item.id)
+      .sort((a, b) => safeTime(b.at) - safeTime(a.at));
+  }, [allEvents, item]);
 
   if (!item) {
     const stillLoading = !loaded && loading;
@@ -45,10 +53,6 @@ const Detail = () => {
 
   const isInactive = item.status === "Resolved" || item.status === "Archived";
   const backTo = isInactive ? "/archive" : "/";
-
-  const sortedEvents = [...events].sort(
-    (a, b) => safeTime(b.at) - safeTime(a.at)
-  );
 
   const onAddNote = async () => {
     if (!noteDraft.trim()) return;
