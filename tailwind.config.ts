@@ -13,9 +13,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Cormorant Garamond", "Garamond", "Hoefler Text", "serif"],
-        accent: ["Fraunces", "Cormorant Garamond", "serif"],
-        body: ["Newsreader", "Iowan Old Style", "Charter", "Georgia", "serif"],
+        display: ["Cormorant Garamond", "Georgia", "serif"],
+        accent: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI Variable", "Segoe UI", "Roboto", "sans-serif"],
+        body: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI Variable", "Segoe UI", "Roboto", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

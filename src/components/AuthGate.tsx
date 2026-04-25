@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useMsal, useIsAuthenticated } from "@azure/msal-react";
 import { GRAPH_SCOPES, msalInstance } from "@/lib/msal";
-import { Ornament } from "@/components/Ornament";
 
 interface Props {
   children: React.ReactNode;
@@ -46,8 +45,7 @@ export const AuthGate = ({ children }: Props) => {
       <div className="max-w-md w-full text-center">
         <p className="eyebrow">Lithia Springs Methodist</p>
         <h1 className="font-display mt-3 text-4xl">The Prayer List</h1>
-        <Ornament className="mt-6" />
-        <p className="font-accent italic text-muted-foreground mt-6 text-lg leading-relaxed">
+        <p className="text-muted-foreground mt-6 text-base sm:text-lg leading-relaxed">
           Sign in with your church Microsoft 365 account to read and update the list.
         </p>
 
@@ -60,7 +58,7 @@ export const AuthGate = ({ children }: Props) => {
         </button>
 
         {error && (
-          <p className="mt-4 font-accent text-sm text-destructive break-words">{error}</p>
+          <p className="mt-4 text-sm text-destructive break-words">{error}</p>
         )}
       </div>
     </div>
