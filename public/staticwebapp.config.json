@@ -2,5 +2,31 @@
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": ["/auth-popup.html", "/*.{css,js,ico,png,jpg,svg,webp,woff,woff2,json,webmanifest}"]
-  }
+  },
+  "routes": [
+    {
+      "route": "/sw.js",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
+    },
+    {
+      "route": "/registerSW.js",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
+    },
+    {
+      "route": "/manifest.webmanifest",
+      "headers": {
+        "Cache-Control": "public, max-age=300"
+      }
+    },
+    {
+      "route": "/index.html",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate"
+      }
+    }
+  ]
 }
