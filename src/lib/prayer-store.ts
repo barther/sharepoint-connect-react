@@ -7,6 +7,7 @@ import {
   deleteRequest,
   createEvent,
 } from "./graph";
+import { safeTime } from "./dates";
 import type {
   PrayerRequest,
   PrayerCategory,
@@ -63,7 +64,7 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
     try {
       const [items, events] = await Promise.all([fetchRequests(), fetchEvents()]);
       set({
-        items: items.sort((a, b) => +new Date(b.created) - +new Date(a.created)),
+        items: items.sort((a, b) => safeTime(b.created) - safeTime(a.created)),
         events,
         loaded: true,
         loading: false,
@@ -211,7 +212,7 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
   eventsFor: (id) =>
     get()
       .events.filter((e) => e.requestId === id)
-      .sort((a, b) => +new Date(b.at) - +new Date(a.at)),
+      .sort((a, b) => safeTime(b.at) - safeTime(a.at)),
 }));
 
 export type { PrayerRequest, PrayerCategory, PrayerStatus };

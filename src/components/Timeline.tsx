@@ -1,5 +1,5 @@
-import { format, formatDistanceToNow } from "date-fns";
 import type { PrayerEvent } from "@/lib/prayer-types";
+import { safeFormat, safeDistance } from "@/lib/dates";
 
 const kindLabel = (e: PrayerEvent): string => {
   switch (e.kind) {
@@ -39,12 +39,12 @@ export const Timeline = ({ events }: { events: PrayerEvent[] }) => {
             </span>
           </div>
           <p className="font-accent text-sm text-muted-foreground tabular-nums mt-0.5">
-            {format(new Date(e.at), "MMM d, yyyy · h:mm a")}
+            {safeFormat(e.at, "MMM d, yyyy · h:mm a")}
             <span className="mx-1.5">·</span>
             {e.by}
             <span className="mx-1.5">·</span>
             <span className="italic">
-              {formatDistanceToNow(new Date(e.at), { addSuffix: true })}
+              {safeDistance(e.at)}
             </span>
           </p>
           {e.note && (

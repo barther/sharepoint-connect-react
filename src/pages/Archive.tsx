@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
 import { Masthead } from "@/components/Masthead";
+import { safeFormat, safeTime } from "@/lib/dates";
 import { Ornament } from "@/components/Ornament";
 import { StatusBadge } from "@/components/StatusBadge";
 import { usePrayerStore } from "@/lib/prayer-store";
@@ -22,7 +22,7 @@ const Archive = () => {
         tab === "Archived" ? i.status === "Archived" :
         i.status === "Resolved" || i.status === "Archived"
       )
-      .sort((a, b) => +new Date(b.modified) - +new Date(a.modified));
+      .sort((a, b) => safeTime(b.modified) - safeTime(a.modified));
   }, [items, tab]);
 
   return (
@@ -88,7 +88,7 @@ const Archive = () => {
                       {item.category}
                     </span>
                     <span className="font-accent text-sm italic text-muted-foreground tabular-nums">
-                      {format(new Date(item.modified), "MMM d, yyyy")}
+                      {safeFormat(item.modified, "MMM d, yyyy")}
                     </span>
                   </div>
                   <p className="text-foreground/85 leading-relaxed line-clamp-2 text-base sm:text-lg">
