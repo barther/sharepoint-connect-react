@@ -1,9 +1,11 @@
 import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Masthead } from "@/components/Masthead";
 import { safeDistance, safeFormat, safeTime, daysSince, shortAge, STALE_DAYS } from "@/lib/dates";
 import { StatusBadge } from "@/components/StatusBadge";
 import { usePrayerStore } from "@/lib/prayer-store";
+import { fetchLatestBulletin } from "@/lib/graph";
 import { CATEGORIES, type PrayerCategory } from "@/lib/prayer-types";
 
 type SortMode = "Newest" | "RecentlyUpdated" | "LongestOnList" | "Oldest" | "NameAsc" | "NameDesc";
@@ -21,6 +23,14 @@ const Browse = () => {
   const [categoryFilter, setCategoryFilter] = useState<PrayerCategory | "All">("All");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Latest weekly bulletin PDF — cached for 5 minutes since the flow only runs
+  // once a week. Hides silently if the folder is empty or unreachable.
+  const { data: bulletin } = useQuery({
+    queryKey: ["latest-bulletin"],
+    queryFn: fetchLatestBulletin,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const visible = useMemo(() => {
     const live = items.filter((i) => i.status === "Active" || i.status === "Ongoing");
@@ -68,17 +78,31 @@ const Browse = () => {
     <div className="min-h-screen pb-28 sm:pb-12">
       <Masthead />
 
-      {/* Counts + new-request button */}
+      {/* Counts + bulletin + new-request button */}
       <section className="container-wide pt-6 pb-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <p className="text-base text-muted-foreground">
             <span className="font-semibold text-foreground">{counts.Active}</span> active
             <span className="mx-2 text-foreground/30">·</span>
             <span className="font-semibold text-foreground">{counts.Ongoing}</span> ongoing
           </p>
-          <Link to="/request/new" className="btn-primary hidden sm:inline-flex">
-            <span aria-hidden className="text-lg leading-none">＋</span> New request
-          </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            {bulletin && (
+              <a
+                href={bulletin.webUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary text-sm sm:text-base"
+                title={bulletin.name}
+              >
+                Bulletin{bulletin.printedOn && ` · ${safeFormat(bulletin.printedOn, "MMM d")}`}
+                <span aria-hidden className="ml-1">↗</span>
+              </a>
+            )}
+            <Link to="/request/new" className="btn-primary hidden sm:inline-flex">
+              <span aria-hidden className="text-lg leading-none">＋</span> New request
+            </Link>
+          </div>
         </div>
       </section>
 

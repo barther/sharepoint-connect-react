@@ -242,3 +242,52 @@ export async function createEvent(input: NewEventInput): Promise<PrayerEvent> {
   );
   return rowToEvent(created);
 }
+
+// ---------- Weekly bulletin (Power Automate output) ----------
+
+// The Wednesday-1:30pm flow drops PDFs in `/Prayer List Archive/` named
+// `prayer_list_YYYYMMDD.pdf`. Sorting by name desc = sorting by print-date desc,
+// which is more reliable than sorting by modified time (a bulk-archive cleanup
+// could touch modified without actually being a new bulletin).
+export interface BulletinFile {
+  name: string;
+  webUrl: string;
+  lastModifiedDateTime: string;
+  /** ISO date parsed from the filename (`YYYY-MM-DD`), or null if unparseable. */
+  printedOn: string | null;
+}
+
+const BULLETIN_FOLDER = "Prayer List Archive";
+
+const parsePrintedOn = (filename: string): string | null => {
+  const m = filename.match(/prayer_list_(\d{4})(\d{2})(\d{2})\.pdf/i);
+  return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
+};
+
+interface DriveItem {
+  name: string;
+  webUrl: string;
+  lastModifiedDateTime: string;
+  file?: { mimeType: string };
+}
+
+export async function fetchLatestBulletin(): Promise<BulletinFile | null> {
+  const folder = encodeURIComponent(BULLETIN_FOLDER);
+  const query = new URLSearchParams({ "$orderby": "name desc", "$top": "5" }).toString();
+  const path = `/sites/${SITE_ID}/drive/root:/${folder}:/children?${query}`;
+  try {
+    const res = await gfetch<{ value: DriveItem[] }>(path);
+    const pdf = res.value.find((f) => /\.pdf$/i.test(f.name));
+    if (!pdf) return null;
+    return {
+      name: pdf.name,
+      webUrl: pdf.webUrl,
+      lastModifiedDateTime: pdf.lastModifiedDateTime,
+      printedOn: parsePrintedOn(pdf.name),
+    };
+  } catch {
+    // Folder might not exist yet, or no bulletin's been generated. Render
+    // nothing rather than spamming an error — the bulletin button just hides.
+    return null;
+  }
+}
