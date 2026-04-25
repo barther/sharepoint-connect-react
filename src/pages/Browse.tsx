@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Masthead } from "@/components/Masthead";
-import { safeDistance, safeTime } from "@/lib/dates";
+import { safeDistance, safeFormat, safeTime } from "@/lib/dates";
 import { StatusBadge } from "@/components/StatusBadge";
 import { usePrayerStore } from "@/lib/prayer-store";
 import { CATEGORIES, type PrayerCategory } from "@/lib/prayer-types";
@@ -153,7 +153,10 @@ const Browse = () => {
                         {item.category}
                       </span>
                       <span className="text-sm text-muted-foreground tabular-nums">
-                        {safeDistance(item.modified)}
+                        Submitted {safeFormat(item.dateSubmitted, "MMM d, yyyy")}
+                      </span>
+                      <span className="text-sm text-muted-foreground/80 tabular-nums">
+                        · updated {safeDistance(item.modified)}
                       </span>
                     </div>
                     {item.relationship && (

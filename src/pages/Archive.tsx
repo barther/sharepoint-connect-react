@@ -82,7 +82,10 @@ const Archive = () => {
                         {item.category}
                       </span>
                       <span className="text-sm text-muted-foreground tabular-nums">
-                        {safeFormat(item.modified, "MMM d, yyyy")}
+                        Submitted {safeFormat(item.dateSubmitted, "MMM d, yyyy")}
+                      </span>
+                      <span className="text-sm text-muted-foreground/80 tabular-nums">
+                        · closed {safeFormat(item.modified, "MMM d, yyyy")}
                       </span>
                     </div>
                     <p className="text-foreground/85 leading-relaxed line-clamp-2 text-base sm:text-lg mt-2">
