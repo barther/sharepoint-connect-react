@@ -113,7 +113,6 @@ const Edit = () => {
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Margaret Ellison, or The Wheeler family"
               className={`${inputClass} text-xl py-3`}
             />
           </Field>
@@ -141,7 +140,6 @@ const Edit = () => {
               <input
                 value={relationship}
                 onChange={(e) => setRelationship(e.target.value)}
-                placeholder="Member · Family · Visitor"
                 className={inputClass}
               />
             </Field>
