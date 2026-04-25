@@ -60,6 +60,11 @@ interface RequestFields {
   DateSubmitted?: string; // ISO
   Address?: string;
   Notes?: string;
+  // App-controlled "last touched" timestamp. Distinct from SharePoint's system
+  // `Modified`, which gets bumped by imports/bulk operations and lies about
+  // when a scribe actually edited. We always set this on writes so it tracks
+  // the real edit time end-to-end.
+  LastUpdated?: string;
 }
 
 interface ListItem<F> {
@@ -89,7 +94,9 @@ function rowToRequest(item: ListItem<RequestFields>): PrayerRequest {
     dateSubmitted: (f.DateSubmitted || item.createdDateTime || "").slice(0, 10),
     address: f.Address || undefined,
     notes: f.Notes || undefined,
-    modified: item.lastModifiedDateTime,
+    // Prefer the app-controlled LastUpdated; fall back to the system field for
+    // rows imported before the column existed.
+    modified: f.LastUpdated || item.lastModifiedDateTime,
     created: item.createdDateTime,
     author: item.createdBy?.user?.displayName ?? "Unknown",
   };
@@ -120,6 +127,7 @@ export async function createRequest(
     DateSubmitted: toIsoDate(p.dateSubmitted),
     Address: p.address,
     Notes: p.notes,
+    LastUpdated: new Date().toISOString(),
   };
   const created = await gfetch<ListItem<RequestFields>>(
     `/sites/${SITE_ID}/lists/${REQUESTS_LIST_ID}/items?expand=fields`,
@@ -132,7 +140,9 @@ export async function patchRequest(
   id: number,
   patch: Partial<PrayerRequest>
 ): Promise<void> {
-  const fields: RequestFields = {};
+  // Always bump LastUpdated so any write (status flip, edit, note-attached
+  // touch) sets a fresh "modified" the app can trust.
+  const fields: RequestFields = { LastUpdated: new Date().toISOString() };
   if (patch.title !== undefined) fields.Title = patch.title;
   if (patch.request !== undefined) fields.Request = patch.request;
   if (patch.category !== undefined) fields.Category = patch.category;
