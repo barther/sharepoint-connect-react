@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Masthead } from "@/components/Masthead";
 import { safeDistance, safeFormat, safeTime, daysSince, shortAge, STALE_DAYS } from "@/lib/dates";
@@ -20,6 +20,7 @@ const Browse = () => {
   const [sort, setSort] = useState<SortMode>("Newest");
   const [categoryFilter, setCategoryFilter] = useState<PrayerCategory | "All">("All");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const visible = useMemo(() => {
     const live = items.filter((i) => i.status === "Active" || i.status === "Ongoing");
@@ -84,13 +85,26 @@ const Browse = () => {
       {/* Search + filters */}
       <section className="container-wide pb-4">
         <div className="border-y border-foreground/15 py-4">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, request, or relationship"
-            aria-label="Search"
-            className={inputClass}
-          />
+          <form
+            role="search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              searchRef.current?.blur();
+            }}
+          >
+            <input
+              ref={searchRef}
+              type="search"
+              enterKeyHint="search"
+              autoCorrect="off"
+              autoCapitalize="off"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name, request, or relationship"
+              aria-label="Search"
+              className={inputClass}
+            />
+          </form>
 
           {/* Mobile: disclosure. Desktop: always visible inline. */}
           <button
