@@ -68,6 +68,9 @@ export default defineConfig(() => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
+    // Note: don't add @tanstack/query-core here — it isn't a direct dep, and
+    // listing it forces Rollup to resolve a non-hoisted package and breaks the
+    // production build (and therefore the Azure deploy).
+    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query"],
   },
 }));
