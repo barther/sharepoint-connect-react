@@ -200,6 +200,14 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
       byUpn: get().currentUpn,
       note: note.trim(),
     });
+    // Bump the request's LastUpdated so adding a note counts as activity for
+    // staleness/sort. patchRequest sets LastUpdated unconditionally even with
+    // an empty patch.
+    try {
+      await patchRequest(id, {});
+    } catch {
+      /* non-fatal — the audit event still landed */
+    }
     const now = new Date().toISOString();
     set({
       events: [...get().events, ev],
