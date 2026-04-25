@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { msalInstance } from "@/lib/msal";
 import { AuthGate } from "@/components/AuthGate";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import { usePrayerStore } from "@/lib/prayer-store";
 import Browse from "./pages/Browse.tsx";
 import Detail from "./pages/Detail.tsx";
@@ -44,6 +45,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <HashRouter>
+          <ScrollToTop />
           <ErrorBoundary>
             <AuthGate>
               <SignedInBoot>
