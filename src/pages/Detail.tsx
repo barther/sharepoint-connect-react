@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { format } from "date-fns";
 import { Masthead } from "@/components/Masthead";
+import { safeFormat, safeTime } from "@/lib/dates";
 import { Ornament } from "@/components/Ornament";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Timeline } from "@/components/Timeline";
@@ -47,7 +47,7 @@ const Detail = () => {
   const backTo = isInactive ? "/archive" : "/";
 
   const sortedEvents = [...events].sort(
-    (a, b) => +new Date(b.at) - +new Date(a.at)
+    (a, b) => safeTime(b.at) - safeTime(a.at)
   );
 
   const onAddNote = async () => {
@@ -95,7 +95,7 @@ const Detail = () => {
             <p className="font-accent italic text-muted-foreground mt-2 text-lg">{item.relationship}</p>
           )}
           <p className="font-accent text-sm text-muted-foreground mt-3 tabular-nums">
-            Submitted {format(new Date(item.dateSubmitted), "MMMM d, yyyy")}
+            Submitted {safeFormat(item.dateSubmitted, "MMMM d, yyyy", "an unknown date")}
             <span className="hidden sm:inline"> · by {item.author}</span>
             <span className="sm:hidden block">by {item.author}</span>
           </p>

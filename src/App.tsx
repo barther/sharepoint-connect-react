@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { msalInstance } from "@/lib/msal";
 import { AuthGate } from "@/components/AuthGate";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { usePrayerStore } from "@/lib/prayer-store";
 import Browse from "./pages/Browse.tsx";
 import Detail from "./pages/Detail.tsx";
@@ -43,19 +44,21 @@ const App = () => (
         <Toaster />
         <Sonner />
         <HashRouter>
-          <AuthGate>
-            <SignedInBoot>
-              <Routes>
-                <Route path="/" element={<Browse />} />
-                <Route path="/archive" element={<Archive />} />
-                <Route path="/request/new" element={<Edit />} />
-                <Route path="/request/:id" element={<Detail />} />
-                <Route path="/request/:id/edit" element={<Edit />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </SignedInBoot>
-          </AuthGate>
+          <ErrorBoundary>
+            <AuthGate>
+              <SignedInBoot>
+                <Routes>
+                  <Route path="/" element={<Browse />} />
+                  <Route path="/archive" element={<Archive />} />
+                  <Route path="/request/new" element={<Edit />} />
+                  <Route path="/request/:id" element={<Detail />} />
+                  <Route path="/request/:id/edit" element={<Edit />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </SignedInBoot>
+            </AuthGate>
+          </ErrorBoundary>
         </HashRouter>
       </TooltipProvider>
     </QueryClientProvider>

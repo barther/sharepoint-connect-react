@@ -84,7 +84,9 @@ function rowToRequest(item: ListItem<RequestFields>): PrayerRequest {
     category: (f.Category ?? "Member") as PrayerCategory,
     status: (f.Status ?? "Active") as PrayerStatus,
     relationship: f.Relationship || undefined,
-    dateSubmitted: (f.DateSubmitted ?? item.createdDateTime).slice(0, 10),
+    // `||` (not `??`) so empty strings fall through to createdDateTime —
+    // SharePoint can return "" for blank Date columns and `??` skips that.
+    dateSubmitted: (f.DateSubmitted || item.createdDateTime || "").slice(0, 10),
     address: f.Address || undefined,
     notes: f.Notes || undefined,
     modified: item.lastModifiedDateTime,

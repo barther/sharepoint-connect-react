@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { Masthead } from "@/components/Masthead";
+import { safeDistance, safeTime } from "@/lib/dates";
 import { Ornament } from "@/components/Ornament";
 import { StatusBadge } from "@/components/StatusBadge";
 import { usePrayerStore } from "@/lib/prayer-store";
@@ -33,9 +34,9 @@ const Browse = () => {
     });
     const sorted = [...matched].sort((a, b) => {
       switch (sort) {
-        case "Newest": return +new Date(b.created) - +new Date(a.created);
-        case "RecentlyUpdated": return +new Date(b.modified) - +new Date(a.modified);
-        case "Oldest": return +new Date(a.created) - +new Date(b.created);
+        case "Newest": return safeTime(b.created) - safeTime(a.created);
+        case "RecentlyUpdated": return safeTime(b.modified) - safeTime(a.modified);
+        case "Oldest": return safeTime(a.created) - safeTime(b.created);
         case "NameAsc": return a.title.localeCompare(b.title);
         case "NameDesc": return b.title.localeCompare(a.title);
       }
@@ -160,7 +161,7 @@ const Browse = () => {
                       {item.category}
                     </span>
                     <span className="font-accent text-sm italic text-muted-foreground tabular-nums">
-                      {formatDistanceToNow(new Date(item.modified), { addSuffix: true })}
+                      {safeDistance(item.modified)}
                     </span>
                   </div>
                   {item.relationship && (
