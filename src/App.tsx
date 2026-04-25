@@ -9,6 +9,7 @@ import { AuthGate } from "@/components/AuthGate";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { usePrayerStore } from "@/lib/prayer-store";
+import { useServiceWorkerUpdater } from "@/lib/useServiceWorkerUpdater";
 import Browse from "./pages/Browse.tsx";
 import Detail from "./pages/Detail.tsx";
 import Edit from "./pages/Edit.tsx";
@@ -37,7 +38,9 @@ const SignedInBoot = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const App = () => (
+const App = () => {
+  useServiceWorkerUpdater();
+  return (
   <MsalProvider instance={msalInstance}>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -63,6 +66,7 @@ const App = () => (
       </TooltipProvider>
     </QueryClientProvider>
   </MsalProvider>
-);
+  );
+};
 
 export default App;
