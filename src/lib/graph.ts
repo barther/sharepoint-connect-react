@@ -257,7 +257,7 @@ export interface BulletinFile {
   printedOn: string | null;
 }
 
-const BULLETIN_FOLDER = "Prayer List Archive";
+const BULLETIN_NAME = "Prayer List Archive";
 
 const parsePrintedOn = (filename: string): string | null => {
   const m = filename.match(/prayer_list_(\d{4})(\d{2})(\d{2})\.pdf/i);
@@ -271,23 +271,66 @@ interface DriveItem {
   file?: { mimeType: string };
 }
 
+const toBulletin = (pdf: DriveItem): BulletinFile => ({
+  name: pdf.name,
+  webUrl: pdf.webUrl,
+  lastModifiedDateTime: pdf.lastModifiedDateTime,
+  printedOn: parsePrintedOn(pdf.name),
+});
+
+const pickLatestPdf = (items: DriveItem[]): DriveItem | undefined =>
+  // Filter to PDFs first, then prefer name-desc sort (filename embeds the
+  // print date). Fall back to lastModified if names don't match the pattern.
+  items
+    .filter((f) => /\.pdf$/i.test(f.name))
+    .sort((a, b) => {
+      const ad = parsePrintedOn(a.name);
+      const bd = parsePrintedOn(b.name);
+      if (ad && bd) return bd.localeCompare(ad);
+      return b.lastModifiedDateTime.localeCompare(a.lastModifiedDateTime);
+    })[0];
+
 export async function fetchLatestBulletin(): Promise<BulletinFile | null> {
-  const folder = encodeURIComponent(BULLETIN_FOLDER);
-  const query = new URLSearchParams({ "$orderby": "name desc", "$top": "5" }).toString();
-  const path = `/sites/${SITE_ID}/drive/root:/${folder}:/children?${query}`;
+  const query = new URLSearchParams({ "$top": "25" }).toString();
+
+  // Strategy 1: a sibling document library called "Prayer List Archive".
+  // The Power Automate `folderPath: "/Prayer List Archive"` syntax usually
+  // points at a library at site root, not a folder in the default library.
   try {
-    const res = await gfetch<{ value: DriveItem[] }>(path);
-    const pdf = res.value.find((f) => /\.pdf$/i.test(f.name));
-    if (!pdf) return null;
-    return {
-      name: pdf.name,
-      webUrl: pdf.webUrl,
-      lastModifiedDateTime: pdf.lastModifiedDateTime,
-      printedOn: parsePrintedOn(pdf.name),
-    };
-  } catch {
-    // Folder might not exist yet, or no bulletin's been generated. Render
-    // nothing rather than spamming an error — the bulletin button just hides.
-    return null;
+    const drives = await gfetch<{ value: { id: string; name: string }[] }>(
+      `/sites/${SITE_ID}/drives`
+    );
+    const lib = drives.value.find(
+      (d) => d.name.toLowerCase() === BULLETIN_NAME.toLowerCase()
+    );
+    if (lib) {
+      const res = await gfetch<{ value: DriveItem[] }>(
+        `/drives/${lib.id}/root/children?${query}`
+      );
+      const pdf = pickLatestPdf(res.value);
+      if (pdf) return toBulletin(pdf);
+    }
+  } catch (e) {
+    console.warn("[bulletin] library lookup failed:", e);
   }
+
+  // Strategy 2: a folder named "Prayer List Archive" inside the default
+  // Documents library.
+  try {
+    const folder = encodeURIComponent(BULLETIN_NAME);
+    const res = await gfetch<{ value: DriveItem[] }>(
+      `/sites/${SITE_ID}/drive/root:/${folder}:/children?${query}`
+    );
+    const pdf = pickLatestPdf(res.value);
+    if (pdf) return toBulletin(pdf);
+  } catch (e) {
+    console.warn("[bulletin] folder lookup failed:", e);
+  }
+
+  console.warn(
+    "[bulletin] no PDF found in '%s' as either a library or a folder. " +
+      "Check where Power Automate is actually saving the file.",
+    BULLETIN_NAME
+  );
+  return null;
 }
