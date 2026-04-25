@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Masthead } from "@/components/Masthead";
-import { Ornament } from "@/components/Ornament";
 import { usePrayerStore } from "@/lib/prayer-store";
 import { CATEGORIES, STATUSES, type PrayerCategory, type PrayerStatus } from "@/lib/prayer-types";
 import { toast } from "sonner";
@@ -49,11 +48,11 @@ const Edit = () => {
       <div className="min-h-screen">
         <Masthead />
         <div className="container-prose py-24 text-center">
-          <p className="font-display text-2xl">
+          <p className="text-2xl font-semibold">
             {stillLoading ? "Loading the list…" : "This request could not be found."}
           </p>
           {!stillLoading && (
-            <Link to="/" className="font-accent italic text-primary mt-4 inline-block text-lg">
+            <Link to="/" className="text-primary mt-4 inline-block text-lg font-medium">
               ← Return to the list
             </Link>
           )}
@@ -88,25 +87,25 @@ const Edit = () => {
   };
 
   const inputClass =
-    "w-full bg-card border border-foreground/25 focus:border-primary outline-none px-4 py-3 min-h-[48px] font-body text-lg";
+    "w-full bg-card border border-foreground/25 focus:border-primary outline-none rounded-lg px-4 py-3 min-h-[48px] text-base";
   const textareaClass =
-    "w-full bg-card border border-foreground/25 focus:border-primary outline-none p-4 font-body text-lg leading-relaxed resize-y";
+    "w-full bg-card border border-foreground/25 focus:border-primary outline-none rounded-lg p-4 text-base sm:text-lg leading-relaxed resize-y";
 
   return (
     <div className="min-h-screen">
       <Masthead />
 
-      <form onSubmit={onSave} className="container-prose py-8 sm:py-12">
+      <form onSubmit={onSave} className="container-prose py-6 sm:py-10">
         <Link
           to={existing ? `/request/${existing.id}` : "/"}
-          className="font-accent text-base text-foreground/80 hover:text-primary inline-flex items-center gap-2 min-h-[44px]"
+          className="text-base text-foreground/80 hover:text-primary inline-flex items-center gap-2 min-h-[44px] font-medium"
         >
           <span aria-hidden className="text-xl">←</span> {existing ? "Cancel and return" : "Cancel"}
         </Link>
 
         <header className="mt-4 pb-4 border-b border-foreground/15">
-          <p className="eyebrow">{isNew ? "A new entry" : "Editing"}</p>
-          <h1 className="font-display mt-2">{isNew ? "New Prayer Request" : title || "Edit request"}</h1>
+          <p className="eyebrow">{isNew ? "New entry" : "Editing"}</p>
+          <h1 className="font-display mt-2">{isNew ? "New prayer request" : title || "Edit request"}</h1>
         </header>
 
         <div className="mt-8 space-y-7">
@@ -115,7 +114,7 @@ const Edit = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Margaret Ellison, or The Wheeler family"
-              className={`${inputClass} font-display text-2xl py-3`}
+              className={`${inputClass} text-xl py-3`}
             />
           </Field>
 
@@ -156,8 +155,6 @@ const Edit = () => {
             </Field>
           </div>
 
-          <Ornament className="my-2" />
-
           <Field label="Address" hint="Optional. For cards or visits.">
             <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} className={textareaClass} />
           </Field>
@@ -167,7 +164,7 @@ const Edit = () => {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className={`${textareaClass} font-accent italic`}
+              className={textareaClass}
             />
           </Field>
         </div>
@@ -199,7 +196,7 @@ const Field = ({
   <label className="block">
     <span className="eyebrow block mb-2">{label}</span>
     {children}
-    {hint && <span className="block font-accent italic text-sm text-muted-foreground mt-1.5">{hint}</span>}
+    {hint && <span className="block text-sm text-muted-foreground mt-1.5">{hint}</span>}
   </label>
 );
 
