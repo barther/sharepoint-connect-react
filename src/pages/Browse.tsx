@@ -32,17 +32,18 @@ const Browse = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  const matchesQuery = (i: typeof items[number], q: string) =>
+    !q ||
+    i.title.toLowerCase().includes(q) ||
+    i.request.toLowerCase().includes(q) ||
+    (i.relationship?.toLowerCase().includes(q) ?? false);
+
   const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
     const live = items.filter((i) => i.status === "Active" || i.status === "Ongoing");
     const matched = live.filter((i) => {
-      const q = query.trim().toLowerCase();
-      const matchesQuery =
-        !q ||
-        i.title.toLowerCase().includes(q) ||
-        i.request.toLowerCase().includes(q) ||
-        (i.relationship?.toLowerCase().includes(q) ?? false);
       const matchesCat = categoryFilter === "All" || i.category === categoryFilter;
-      return matchesQuery && matchesCat;
+      return matchesQuery(i, q) && matchesCat;
     });
     const sorted = [...matched].sort((a, b) => {
       switch (sort) {
@@ -56,6 +57,20 @@ const Browse = () => {
     });
     return sorted;
   }, [items, query, sort, categoryFilter]);
+
+  // When the user has typed a query, also surface matches from the archive so
+  // "did we ever pray for the Wheelers?" works without leaving Browse.
+  const archiveMatches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return items
+      .filter((i) => i.status === "Resolved" || i.status === "Archived")
+      .filter((i) => {
+        const matchesCat = categoryFilter === "All" || i.category === categoryFilter;
+        return matchesQuery(i, q) && matchesCat;
+      })
+      .sort((a, b) => safeTime(b.modified) - safeTime(a.modified));
+  }, [items, query, categoryFilter]);
 
   const counts = useMemo(() => ({
     Active: items.filter((i) => i.status === "Active").length,
@@ -256,6 +271,51 @@ const Browse = () => {
               );
             })}
           </ul>
+        )}
+
+        {archiveMatches.length > 0 && (
+          <section className="mt-12 pt-8 border-t border-foreground/15">
+            <div className="flex items-baseline justify-between gap-3 mb-4">
+              <h2 className="text-xl font-semibold">Also in the archive</h2>
+              <span className="text-sm text-muted-foreground">
+                {archiveMatches.length} {archiveMatches.length === 1 ? "result" : "results"}
+              </span>
+            </div>
+            <ul className="divide-y divide-foreground/15">
+              {archiveMatches.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    to={`/request/${item.id}`}
+                    className="group flex items-start gap-4 py-4 sm:py-5 px-2 -mx-2 rounded-lg hover:bg-surface-sunken/50 active:bg-surface-sunken transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display text-xl sm:text-2xl leading-tight group-hover:text-primary transition-colors">
+                        {item.title}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
+                        <StatusBadge status={item.status} />
+                        <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                          {item.category}
+                        </span>
+                        <span className="text-sm text-muted-foreground tabular-nums">
+                          closed {safeFormat(item.modified, "MMM d, yyyy")}
+                        </span>
+                      </div>
+                      <p className="text-foreground/80 leading-relaxed line-clamp-2 text-base mt-2">
+                        {item.request}
+                      </p>
+                    </div>
+                    <span
+                      aria-hidden
+                      className="text-2xl text-muted-foreground/60 group-hover:text-primary leading-none mt-1.5 select-none"
+                    >
+                      ›
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </main>
 
