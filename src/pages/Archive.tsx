@@ -16,7 +16,7 @@ const Archive = () => {
   const loading = usePrayerStore((s) => s.loading);
   const loaded = usePrayerStore((s) => s.loaded);
   const error = usePrayerStore((s) => s.error);
-  const [tab, setTab] = useState<Tab>("Resolved");
+  const [tab, setTab] = useState<Tab>("All");
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<PrayerCategory | "All">("All");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -79,7 +79,7 @@ const Archive = () => {
       {/* Tabs */}
       <section className="container-wide pt-4 pb-2">
         <div className="grid grid-cols-3 border-y border-foreground/15">
-          {(["Resolved", "Archived", "All"] as Tab[]).map((t) => (
+          {(["All", "Resolved", "Archived"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
