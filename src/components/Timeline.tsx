@@ -38,7 +38,7 @@ export const Timeline = ({ events }: { events: PrayerEvent[] }) => {
             </span>
           </div>
           <p className="text-sm text-muted-foreground tabular-nums mt-0.5">
-            {safeFormat(e.at, "MMM d, yyyy · h:mm a")}
+            {safeFormat(e.at, "MMM d, yyyy")}
             <span className="mx-1.5">·</span>
             {e.by}
             <span className="mx-1.5">·</span>
