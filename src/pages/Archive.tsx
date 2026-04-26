@@ -1,12 +1,14 @@
-import { useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useMemo, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Masthead } from "@/components/Masthead";
 import { safeFormat, safeTime } from "@/lib/dates";
 import { StatusBadge } from "@/components/StatusBadge";
 import { usePrayerStore } from "@/lib/prayer-store";
 import { CATEGORIES, type PrayerCategory } from "@/lib/prayer-types";
 
-type Tab = "Resolved" | "Archived" | "All";
+type Tab = "All" | "Resolved" | "Archived";
+const TAB_VALUES: readonly Tab[] = ["All", "Resolved", "Archived"];
+const DEFAULT_TAB: Tab = "All";
 
 const inputClass =
   "w-full bg-card border border-foreground/25 focus:border-primary outline-none rounded-lg px-4 py-3 min-h-[48px] text-base";
@@ -16,9 +18,31 @@ const Archive = () => {
   const loading = usePrayerStore((s) => s.loading);
   const loaded = usePrayerStore((s) => s.loaded);
   const error = usePrayerStore((s) => s.error);
-  const [tab, setTab] = useState<Tab>("All");
-  const [query, setQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<PrayerCategory | "All">("All");
+
+  // Persist filter state in the URL so it survives navigating into a request
+  // and back. `replace: true` avoids polluting back-history with each keystroke.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = searchParams.get("q") ?? "";
+  const tabParam = searchParams.get("tab");
+  const tab: Tab = tabParam && (TAB_VALUES as readonly string[]).includes(tabParam)
+    ? (tabParam as Tab)
+    : DEFAULT_TAB;
+  const catParam = searchParams.get("cat");
+  const categoryFilter: PrayerCategory | "All" =
+    catParam && (CATEGORIES as readonly string[]).includes(catParam)
+      ? (catParam as PrayerCategory)
+      : "All";
+
+  const updateParam = (key: string, value: string, isDefault: boolean) => {
+    const next = new URLSearchParams(searchParams);
+    if (isDefault || !value) next.delete(key);
+    else next.set(key, value);
+    setSearchParams(next, { replace: true });
+  };
+  const setQuery = (v: string) => updateParam("q", v, false);
+  const setTab = (v: Tab) => updateParam("tab", v, v === DEFAULT_TAB);
+  const setCategoryFilter = (v: PrayerCategory | "All") => updateParam("cat", v, v === "All");
+
   const searchRef = useRef<HTMLInputElement>(null);
 
   const visible = useMemo(() => {

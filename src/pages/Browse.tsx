@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Masthead } from "@/components/Masthead";
 import { safeDistance, safeFormat, safeTime, daysSince, shortAge, STALE_DAYS } from "@/lib/dates";
@@ -9,6 +9,8 @@ import { fetchLatestBulletin } from "@/lib/graph";
 import { CATEGORIES, type PrayerCategory } from "@/lib/prayer-types";
 
 type SortMode = "Newest" | "RecentlyUpdated" | "LongestOnList" | "Oldest" | "NameAsc" | "NameDesc";
+const SORT_VALUES: readonly SortMode[] = ["Newest", "RecentlyUpdated", "LongestOnList", "Oldest", "NameAsc", "NameDesc"];
+const DEFAULT_SORT: SortMode = "RecentlyUpdated";
 
 const inputClass =
   "w-full bg-card border border-foreground/25 focus:border-primary outline-none rounded-lg px-4 py-3 min-h-[48px] text-base";
@@ -18,9 +20,32 @@ const Browse = () => {
   const loading = usePrayerStore((s) => s.loading);
   const loaded = usePrayerStore((s) => s.loaded);
   const error = usePrayerStore((s) => s.error);
-  const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<SortMode>("RecentlyUpdated");
-  const [categoryFilter, setCategoryFilter] = useState<PrayerCategory | "All">("All");
+
+  // Filter state lives in the URL so it survives navigation to Detail and back.
+  // `replace: true` on writes keeps each keystroke from polluting back history.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = searchParams.get("q") ?? "";
+  const sortParam = searchParams.get("sort");
+  const sort: SortMode = sortParam && (SORT_VALUES as readonly string[]).includes(sortParam)
+    ? (sortParam as SortMode)
+    : DEFAULT_SORT;
+  const catParam = searchParams.get("cat");
+  const categoryFilter: PrayerCategory | "All" =
+    catParam && (CATEGORIES as readonly string[]).includes(catParam)
+      ? (catParam as PrayerCategory)
+      : "All";
+
+  const updateParam = (key: string, value: string, isDefault: boolean) => {
+    const next = new URLSearchParams(searchParams);
+    if (isDefault || !value) next.delete(key);
+    else next.set(key, value);
+    setSearchParams(next, { replace: true });
+  };
+
+  const setQuery = (v: string) => updateParam("q", v, false);
+  const setSort = (v: SortMode) => updateParam("sort", v, v === DEFAULT_SORT);
+  const setCategoryFilter = (v: PrayerCategory | "All") => updateParam("cat", v, v === "All");
+
   const [filtersOpen, setFiltersOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
