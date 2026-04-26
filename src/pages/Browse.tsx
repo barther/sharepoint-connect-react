@@ -19,7 +19,7 @@ const Browse = () => {
   const loaded = usePrayerStore((s) => s.loaded);
   const error = usePrayerStore((s) => s.error);
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<SortMode>("Newest");
+  const [sort, setSort] = useState<SortMode>("RecentlyUpdated");
   const [categoryFilter, setCategoryFilter] = useState<PrayerCategory | "All">("All");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -87,7 +87,7 @@ const Browse = () => {
     [items]
   );
 
-  const filtersActive = categoryFilter !== "All" || sort !== "Newest";
+  const filtersActive = categoryFilter !== "All" || sort !== "RecentlyUpdated";
 
   return (
     <div className="min-h-screen pb-28 sm:pb-12">
