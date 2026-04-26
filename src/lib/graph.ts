@@ -94,9 +94,14 @@ function rowToRequest(item: ListItem<RequestFields>): PrayerRequest {
     dateSubmitted: (f.DateSubmitted || item.createdDateTime || "").slice(0, 10),
     address: f.Address || undefined,
     notes: f.Notes || undefined,
-    // Prefer the app-controlled LastUpdated; fall back to the system field for
-    // rows imported before the column existed.
-    modified: f.LastUpdated || item.lastModifiedDateTime,
+    // Truth-prioritized fallback chain:
+    //   1. LastUpdated — set by every app write, the real "last touched"
+    //   2. DateSubmitted — for historical imports without LastUpdated, this is
+    //      at least an honest floor ("hasn't been touched in app since at least
+    //      it was first listed"). Better than the system Modified field, which
+    //      bulk imports bump to "now" and lie about activity.
+    //   3. createdDateTime — last-resort fallback if both are blank.
+    modified: f.LastUpdated || f.DateSubmitted || item.createdDateTime,
     created: item.createdDateTime,
     author: item.createdBy?.user?.displayName ?? "Unknown",
   };
