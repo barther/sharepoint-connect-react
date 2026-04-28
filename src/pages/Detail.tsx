@@ -58,9 +58,9 @@ const Detail = () => {
     try {
       await addNote(item.id, noteDraft);
       setNoteDraft("");
-      toast.success("Note added.");
+      toast.success("Update posted.");
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Could not add note.");
+      toast.error(e instanceof Error ? e.message : "Could not save update.");
     }
   };
 
@@ -192,10 +192,10 @@ const Detail = () => {
             </span>
           </div>
 
-          {/* Quick note */}
+          {/* Post an update — replaces the request body and gets read aloud Wednesday */}
           <div className="bg-card border border-foreground/15 rounded-lg p-4 sm:p-5 mb-6">
             <label className="block">
-              <span className="eyebrow block mb-2">Add a note</span>
+              <span className="eyebrow block mb-2">Post an update</span>
               <textarea
                 value={noteDraft}
                 onChange={(e) => setNoteDraft(e.target.value)}
@@ -203,6 +203,9 @@ const Detail = () => {
                 placeholder="What's the update?"
                 className="w-full bg-background border border-foreground/25 focus:border-primary outline-none rounded-lg p-3 text-base sm:text-lg leading-relaxed resize-y"
               />
+              <span className="block text-sm text-muted-foreground mt-1.5">
+                Replaces the request shown above and goes in the next bulletin.
+              </span>
             </label>
             <div className="mt-3 flex justify-end">
               <button
@@ -210,7 +213,7 @@ const Detail = () => {
                 disabled={!noteDraft.trim()}
                 className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Add note
+                Post update
               </button>
             </div>
           </div>

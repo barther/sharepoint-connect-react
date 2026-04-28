@@ -192,19 +192,20 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
   },
 
   addNote: async (id, note) => {
-    if (!note.trim()) return;
+    const trimmed = note.trim();
+    if (!trimmed) return;
     const ev = await createEvent({
       requestId: id,
       kind: "note",
       byName: get().currentScribe,
       byUpn: get().currentUpn,
-      note: note.trim(),
+      note: trimmed,
     });
-    // Bump the request's LastUpdated so adding a note counts as activity for
-    // staleness/sort. patchRequest sets LastUpdated unconditionally even with
-    // an empty patch.
+    // Promote the new entry to the request body — the headline always shows
+    // the latest update, and the Wednesday bulletin (which reads `Request`)
+    // gets the same text. patchRequest also bumps LastUpdated.
     try {
-      await patchRequest(id, {});
+      await patchRequest(id, { request: trimmed });
     } catch {
       /* non-fatal — the audit event still landed */
     }
@@ -212,7 +213,7 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
     set({
       events: [...get().events, ev],
       items: get().items.map((i) =>
-        i.id === id ? { ...i, modified: now } : i
+        i.id === id ? { ...i, request: trimmed, modified: now } : i
       ),
     });
   },
