@@ -128,8 +128,8 @@ const Detail = () => {
 
         {/* Actions — full width and stacked on phone, primary action obviously solid */}
         <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-center">
-          <Link to={`/request/${item.id}/edit`} className="btn-primary w-full sm:w-auto">
-            {isInactive ? "Update details" : "Update request"}
+          <Link to={`/request/${item.id}/edit`} className="btn-secondary w-full sm:w-auto">
+            Edit details
           </Link>
 
           {item.status === "Active" && (
