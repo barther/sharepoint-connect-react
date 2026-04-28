@@ -104,11 +104,41 @@ const Detail = () => {
           </p>
         </header>
 
-        <div className="mt-6">
+        <section className="mt-6">
+          <h2 className="eyebrow mb-2">Current request</h2>
           <p className="text-lg sm:text-xl leading-[1.6] text-foreground">
             {item.request}
           </p>
-        </div>
+        </section>
+
+        {/* Post an update — replaces the body above and gets read aloud Wednesday.
+            Lives right under the body so the visual relationship is unmissable. */}
+        {(item.status === "Active" || item.status === "Ongoing") && (
+          <section className="mt-5 bg-card border border-foreground/15 rounded-lg p-4 sm:p-5">
+            <label className="block">
+              <span className="eyebrow block mb-2">Post an update</span>
+              <textarea
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                rows={2}
+                placeholder="What's the update?"
+                className="w-full bg-background border border-foreground/25 focus:border-primary outline-none rounded-lg p-3 text-base sm:text-lg leading-relaxed resize-y"
+              />
+              <span className="block text-sm text-muted-foreground mt-1.5">
+                Replaces the current request and goes in the next bulletin.
+              </span>
+            </label>
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={onAddNote}
+                disabled={!noteDraft.trim()}
+                className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Post update
+              </button>
+            </div>
+          </section>
+        )}
 
         {item.notes && (
           <section className="mt-8 bg-card border border-foreground/15 rounded-lg p-4 sm:p-5">
@@ -190,32 +220,6 @@ const Detail = () => {
             <span className="text-sm text-muted-foreground">
               {sortedEvents.length} {sortedEvents.length === 1 ? "entry" : "entries"}
             </span>
-          </div>
-
-          {/* Post an update — replaces the request body and gets read aloud Wednesday */}
-          <div className="bg-card border border-foreground/15 rounded-lg p-4 sm:p-5 mb-6">
-            <label className="block">
-              <span className="eyebrow block mb-2">Post an update</span>
-              <textarea
-                value={noteDraft}
-                onChange={(e) => setNoteDraft(e.target.value)}
-                rows={2}
-                placeholder="What's the update?"
-                className="w-full bg-background border border-foreground/25 focus:border-primary outline-none rounded-lg p-3 text-base sm:text-lg leading-relaxed resize-y"
-              />
-              <span className="block text-sm text-muted-foreground mt-1.5">
-                Replaces the request shown above and goes in the next bulletin.
-              </span>
-            </label>
-            <div className="mt-3 flex justify-end">
-              <button
-                onClick={onAddNote}
-                disabled={!noteDraft.trim()}
-                className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Post update
-              </button>
-            </div>
           </div>
 
           <Timeline events={sortedEvents} />
