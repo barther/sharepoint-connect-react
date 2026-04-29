@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Masthead } from "@/components/Masthead";
 import { safeDistance, safeFormat, safeTime, daysSince, shortAge, STALE_DAYS } from "@/lib/dates";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -20,6 +21,20 @@ const Browse = () => {
   const loading = usePrayerStore((s) => s.loading);
   const loaded = usePrayerStore((s) => s.loaded);
   const error = usePrayerStore((s) => s.error);
+  const load = usePrayerStore((s) => s.load);
+  const queryClient = useQueryClient();
+
+  const onRefresh = async () => {
+    try {
+      await Promise.all([
+        load(),
+        queryClient.invalidateQueries({ queryKey: ["latest-bulletin"] }),
+      ]);
+      toast.success("List refreshed from SharePoint.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Refresh failed.");
+    }
+  };
 
   // Filter state lives in the URL so it survives navigation to Detail and back.
   // `replace: true` on writes keeps each keystroke from polluting back history.
@@ -127,6 +142,16 @@ const Browse = () => {
             <span className="font-semibold text-foreground">{counts.Ongoing}</span> ongoing
           </p>
           <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={onRefresh}
+              disabled={loading}
+              className="btn-quiet text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Reload from SharePoint"
+              aria-label="Refresh list from SharePoint"
+            >
+              <span aria-hidden className={loading ? "animate-spin inline-block" : "inline-block"}>↻</span>
+              <span>{loading ? "Refreshing" : "Refresh"}</span>
+            </button>
             {bulletin && (
               <a
                 href={bulletin.webUrl}

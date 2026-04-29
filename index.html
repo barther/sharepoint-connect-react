@@ -17,6 +17,19 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Prayer List" />
 
+    <script>
+      // Restore the user's saved text-size preference before React mounts —
+      // avoids a flash of default-sized text on every load.
+      (function () {
+        try {
+          var s = localStorage.getItem("textSize");
+          if (s === "large" || s === "xl") {
+            document.documentElement.dataset.textSize = s;
+          }
+        } catch (e) { /* private mode / storage disabled — fall through */ }
+      })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

@@ -77,17 +77,24 @@
     @apply border-border;
   }
 
+  /* Drive everything from html's root font-size so the in-app text size control
+     can scale Tailwind's rem-based utilities (text-sm, text-base, …) up at once.
+     iOS Safari doesn't honor Dynamic Type for arbitrary px values, so we expose
+     our own size picker instead. */
   html {
     font-family: var(--font-sans);
+    font-size: 18px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
 
+  html[data-text-size="large"] { font-size: 21px; }
+  html[data-text-size="xl"]    { font-size: 24px; }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
-    font-size: 18px;
     line-height: 1.55;
   }
 

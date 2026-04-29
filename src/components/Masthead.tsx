@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import { useMsal } from "@azure/msal-react";
+import { TextSizeControl } from "@/components/TextSizeControl";
 
 export const Masthead = () => {
   const { pathname } = useLocation();
@@ -54,6 +55,13 @@ export const Masthead = () => {
             </button>
           )}
         </nav>
+
+        {/* Text size control — boomer-friendly accessibility, since iOS Dynamic
+            Type doesn't honor explicit font-sizes in web content. */}
+        <div className="flex items-center justify-end gap-3 pt-1 pb-1 -mt-1 sm:mt-0">
+          <span className="eyebrow">Text size</span>
+          <TextSizeControl />
+        </div>
       </div>
     </header>
   );

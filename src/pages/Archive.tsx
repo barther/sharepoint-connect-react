@@ -1,5 +1,7 @@
 import { useMemo, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Masthead } from "@/components/Masthead";
 import { safeFormat, safeTime } from "@/lib/dates";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -18,6 +20,20 @@ const Archive = () => {
   const loading = usePrayerStore((s) => s.loading);
   const loaded = usePrayerStore((s) => s.loaded);
   const error = usePrayerStore((s) => s.error);
+  const load = usePrayerStore((s) => s.load);
+  const queryClient = useQueryClient();
+
+  const onRefresh = async () => {
+    try {
+      await Promise.all([
+        load(),
+        queryClient.invalidateQueries({ queryKey: ["latest-bulletin"] }),
+      ]);
+      toast.success("List refreshed from SharePoint.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Refresh failed.");
+    }
+  };
 
   // Persist filter state in the URL so it survives navigating into a request
   // and back. `replace: true` avoids polluting back-history with each keystroke.
@@ -72,8 +88,22 @@ const Archive = () => {
       <Masthead />
 
       <section className="container-wide pt-6 pb-2">
-        <h1 className="text-2xl font-semibold">Archive</h1>
-        <p className="text-base text-muted-foreground mt-1">Resolved and archived requests.</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold">Archive</h1>
+            <p className="text-base text-muted-foreground mt-1">Resolved and archived requests.</p>
+          </div>
+          <button
+            onClick={onRefresh}
+            disabled={loading}
+            className="btn-quiet text-sm sm:text-base shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Reload from SharePoint"
+            aria-label="Refresh archive from SharePoint"
+          >
+            <span aria-hidden className={loading ? "animate-spin inline-block" : "inline-block"}>↻</span>
+            <span>{loading ? "Refreshing" : "Refresh"}</span>
+          </button>
+        </div>
       </section>
 
       {/* Search */}
