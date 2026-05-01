@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Masthead } from "@/components/Masthead";
+import { StatusBadge } from "@/components/StatusBadge";
 import { usePrayerStore } from "@/lib/prayer-store";
 import { CATEGORIES, STATUSES, type PrayerCategory, type PrayerStatus } from "@/lib/prayer-types";
 import { toast } from "sonner";
@@ -29,6 +30,20 @@ const Edit = () => {
   const [notes, setNotes] = useState(existing?.notes ?? "");
 
   const [saving, setSaving] = useState(false);
+
+  // Live duplicate-detection on the title field for new requests — surfaces
+  // existing entries with similar titles so scribes don't re-create someone
+  // who's already on the list. The "I have new info, must add new entry"
+  // mental model from paper-based prayer lists is the most common adoption
+  // mistake; nudging at the moment of creation is the cheapest fix.
+  const possibleMatches = useMemo(() => {
+    if (!isNew) return [];
+    const q = title.trim().toLowerCase();
+    if (q.length < 3) return [];
+    return items
+      .filter((i) => i.title.toLowerCase().includes(q))
+      .slice(0, 3);
+  }, [isNew, title, items]);
 
   useEffect(() => {
     if (!existing) return;
@@ -116,6 +131,43 @@ const Edit = () => {
               className={`${inputClass} text-xl py-3`}
             />
           </Field>
+
+          {possibleMatches.length > 0 && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 -mt-4">
+              <p className="eyebrow mb-2">Already on the list?</p>
+              <ul className="divide-y divide-primary/15">
+                {possibleMatches.map((m) => (
+                  <li key={m.id}>
+                    <Link
+                      to={`/request/${m.id}`}
+                      className="flex items-center gap-3 py-3 group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className="font-display text-lg sm:text-xl group-hover:text-primary transition-colors">
+                            {m.title}
+                          </span>
+                          <StatusBadge status={m.status} />
+                          <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                            {m.category}
+                          </span>
+                        </div>
+                        {m.relationship && (
+                          <p className="text-sm text-muted-foreground mt-0.5">{m.relationship}</p>
+                        )}
+                      </div>
+                      <span className="text-sm text-primary font-medium whitespace-nowrap group-hover:underline underline-offset-4">
+                        Update that one →
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-sm text-muted-foreground mt-2">
+                If this is a different person, just keep typing.
+              </p>
+            </div>
+          )}
 
           <Field label="The request *" hint="A few sentences the prayer team can read aloud.">
             <textarea value={request} onChange={(e) => setRequest(e.target.value)} rows={6} className={textareaClass} />
