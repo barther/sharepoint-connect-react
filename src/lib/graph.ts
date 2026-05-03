@@ -296,7 +296,7 @@ const pickLatestPdf = (items: DriveItem[]): DriveItem | undefined =>
     .sort((a, b) => {
       const ad = parsePrintedOn(a.name);
       const bd = parsePrintedOn(b.name);
-      if (ad && bd) return bd.localeCompare(ad);
+      if (ad && bd) return bd.getTime() - ad.getTime();
       return b.lastModifiedDateTime.localeCompare(a.lastModifiedDateTime);
     })[0];
 
