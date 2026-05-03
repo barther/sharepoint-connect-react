@@ -16,6 +16,18 @@ const DEFAULT_SORT: SortMode = "RecentlyUpdated";
 const inputClass =
   "w-full bg-card border border-foreground/25 focus:border-primary outline-none rounded-lg px-4 py-3 min-h-[48px] text-base";
 
+// Pure free function — kept at module scope so the useMemo dependency array
+// stays honest. (The exhaustive-deps lint flagged it as missing when it lived
+// in the component body, even though it captures nothing.)
+const matchesQuery = (
+  i: { title: string; request: string; relationship?: string },
+  q: string
+) =>
+  !q ||
+  i.title.toLowerCase().includes(q) ||
+  i.request.toLowerCase().includes(q) ||
+  (i.relationship?.toLowerCase().includes(q) ?? false);
+
 const Browse = () => {
   const items = usePrayerStore((s) => s.items);
   const loading = usePrayerStore((s) => s.loading);
@@ -71,12 +83,6 @@ const Browse = () => {
     queryFn: fetchLatestBulletin,
     staleTime: 5 * 60 * 1000,
   });
-
-  const matchesQuery = (i: typeof items[number], q: string) =>
-    !q ||
-    i.title.toLowerCase().includes(q) ||
-    i.request.toLowerCase().includes(q) ||
-    (i.relationship?.toLowerCase().includes(q) ?? false);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
