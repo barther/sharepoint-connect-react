@@ -258,15 +258,20 @@ export interface BulletinFile {
   name: string;
   webUrl: string;
   lastModifiedDateTime: string;
-  /** ISO date parsed from the filename (`YYYY-MM-DD`), or null if unparseable. */
-  printedOn: string | null;
+  /** Date parsed from the filename, in the local timezone, or null if unparseable. */
+  printedOn: Date | null;
 }
 
 const BULLETIN_NAME = "Prayer List Archive";
 
-const parsePrintedOn = (filename: string): string | null => {
+const parsePrintedOn = (filename: string): Date | null => {
   const m = filename.match(/prayer_list_(\d{4})(\d{2})(\d{2})\.pdf/i);
-  return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
+  if (!m) return null;
+  // Construct from local-time components — `new Date("YYYY-MM-DD")` is parsed
+  // as UTC midnight, which displays as the *previous* day in any timezone
+  // west of GMT (e.g., April 29 UTC = April 28 8pm Eastern). Using the Date
+  // constructor's numeric form keeps it in the local zone.
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
 };
 
 interface DriveItem {
@@ -291,7 +296,7 @@ const pickLatestPdf = (items: DriveItem[]): DriveItem | undefined =>
     .sort((a, b) => {
       const ad = parsePrintedOn(a.name);
       const bd = parsePrintedOn(b.name);
-      if (ad && bd) return bd.localeCompare(ad);
+      if (ad && bd) return bd.getTime() - ad.getTime();
       return b.lastModifiedDateTime.localeCompare(a.lastModifiedDateTime);
     })[0];
 
