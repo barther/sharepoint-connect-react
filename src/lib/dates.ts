@@ -6,7 +6,16 @@ import { format, formatDistanceToNow } from "date-fns";
 
 const toValidDate = (input: string | number | Date | undefined | null): Date | null => {
   if (input === undefined || input === null || input === "") return null;
-  const d = input instanceof Date ? input : new Date(input);
+  if (input instanceof Date) return Number.isNaN(input.getTime()) ? null : input;
+  // Plain `YYYY-MM-DD` strings (date-only, no time component) get parsed as
+  // UTC midnight by the Date constructor, which displays as the previous day
+  // in any negative-offset timezone (e.g. Eastern). Detect and parse as
+  // local-time components so dates round-trip correctly.
+  if (typeof input === "string") {
+    const m = input.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+  const d = new Date(input);
   return Number.isNaN(d.getTime()) ? null : d;
 };
 
