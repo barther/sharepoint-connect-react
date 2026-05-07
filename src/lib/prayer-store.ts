@@ -6,6 +6,7 @@ import {
   patchRequest,
   deleteRequest,
   createEvent,
+  patchEventRequestId,
 } from "./graph";
 import { safeTime } from "./dates";
 import type {
@@ -43,6 +44,7 @@ interface PrayerStore {
   remove: (id: number) => Promise<void>;
   setStatus: (id: number, status: PrayerStatus) => Promise<void>;
   addNote: (id: number, note: string) => Promise<void>;
+  mergeInto: (canonicalId: number, duplicateId: number) => Promise<void>;
 
   eventsFor: (id: number) => PrayerEvent[];
 }
@@ -215,6 +217,81 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
       items: get().items.map((i) =>
         i.id === id ? { ...i, request: trimmed, modified: now } : i
       ),
+    });
+  },
+
+  // Merge a duplicate record into a canonical one. Steps, in order:
+  //   1. PATCH every PrayerEvents row whose RequestId points at the duplicate
+  //      so it points at the canonical (preserves the full audit trail).
+  //   2. If the duplicate was submitted earlier than the canonical, inherit
+  //      that earlier dateSubmitted onto the canonical — the "on the list X"
+  //      indicator should reflect the truer history.
+  //   3. DELETE the duplicate's request item (its events are already moved).
+  //   4. Append a `merged` event on the canonical so the merge itself is
+  //      recorded in the timeline.
+  //   5. Refresh local store from the same writes.
+  // Destructive and irreversible — gated by `isAdminUpn` at the call site.
+  mergeInto: async (canonicalId, duplicateId) => {
+    if (canonicalId === duplicateId) {
+      throw new Error("Can't merge a record into itself.");
+    }
+    const canonical = get().items.find((i) => i.id === canonicalId);
+    const duplicate = get().items.find((i) => i.id === duplicateId);
+    if (!canonical || !duplicate) {
+      throw new Error("Could not find both records to merge.");
+    }
+
+    // 1. Reassign duplicate's events to canonical
+    const dupEvents = get().events.filter((e) => e.requestId === duplicateId);
+    await Promise.all(dupEvents.map((e) => patchEventRequestId(e.id, canonicalId)));
+
+    // 2. Inherit earlier dateSubmitted if applicable
+    let inheritedDateSubmitted: string | undefined;
+    if (
+      duplicate.dateSubmitted &&
+      (!canonical.dateSubmitted || duplicate.dateSubmitted < canonical.dateSubmitted)
+    ) {
+      inheritedDateSubmitted = duplicate.dateSubmitted;
+      await patchRequest(canonicalId, { dateSubmitted: duplicate.dateSubmitted });
+    }
+
+    // 3. Delete the duplicate
+    await deleteRequest(duplicateId);
+
+    // 4. Audit event on the canonical
+    let mergedEvent: PrayerEvent | undefined;
+    try {
+      mergedEvent = await createEvent({
+        requestId: canonicalId,
+        kind: "merged",
+        byName: get().currentScribe,
+        byUpn: get().currentUpn,
+        note: `Merged from "${duplicate.title}" (id #${duplicateId}) — ${dupEvents.length} event${dupEvents.length === 1 ? "" : "s"} preserved.`,
+      });
+    } catch {
+      /* non-fatal — the merge itself succeeded, audit row missed */
+    }
+
+    // 5. Reflect in local store
+    const now = new Date().toISOString();
+    set({
+      items: get()
+        .items.filter((i) => i.id !== duplicateId)
+        .map((i) =>
+          i.id === canonicalId
+            ? {
+                ...i,
+                dateSubmitted: inheritedDateSubmitted ?? i.dateSubmitted,
+                modified: now,
+              }
+            : i
+        ),
+      events: [
+        ...get().events.map((e) =>
+          e.requestId === duplicateId ? { ...e, requestId: canonicalId } : e
+        ),
+        ...(mergedEvent ? [mergedEvent] : []),
+      ],
     });
   },
 

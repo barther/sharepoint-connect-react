@@ -13,6 +13,17 @@ const POPUP_REDIRECT_URI = `${window.location.origin}/auth-popup.html`;
 
 export const GRAPH_SCOPES = ["Sites.ReadWrite.All"];
 
+// UPNs allowed to perform destructive admin actions (e.g. merging duplicate
+// records). Plain array for now — when this list grows past a handful, swap
+// for a SharePoint security group lookup at sign-in time. Compared
+// case-insensitively so casing differences don't matter.
+const ADMIN_UPNS: readonly string[] = [
+  "bart.arther@lithiaspringsmethodist.org",
+];
+
+export const isAdminUpn = (upn?: string | null): boolean =>
+  !!upn && ADMIN_UPNS.includes(upn.toLowerCase());
+
 export const msalConfig: Configuration = {
   auth: {
     clientId: CLIENT_ID,

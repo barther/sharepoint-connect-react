@@ -31,7 +31,8 @@ export type PrayerEventKind =
   | "created"
   | "status"        // status change
   | "edited"        // text/category/etc edited
-  | "note";         // free-form pastoral note
+  | "note"          // free-form pastoral note (also used for "post update")
+  | "merged";       // duplicate record merged into this one
 
 export interface PrayerEvent {
   id: number;
