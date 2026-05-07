@@ -229,6 +229,7 @@ export async function createEvent(input: NewEventInput): Promise<PrayerEvent> {
     status: `Status: ${input.from ?? "?"} → ${input.to ?? "?"}`,
     edited: "Edited",
     note: "Note added",
+    merged: "Merged from another record",
   };
   const fields: EventFields = {
     Title: input.title ?? titleFallback[input.kind],
@@ -343,4 +344,16 @@ export async function fetchLatestBulletin(): Promise<BulletinFile | null> {
     BULLETIN_NAME
   );
   return null;
+}
+
+// Re-point an event row at a different request — used by the merge action to
+// move all events from a duplicate record onto the canonical one.
+export async function patchEventRequestId(eventId: number, newRequestId: number): Promise<void> {
+  await gfetch(
+    `/sites/${SITE_ID}/lists/${EVENTS_LIST_ID}/items/${eventId}/fields`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ RequestId: newRequestId }),
+    }
+  );
 }

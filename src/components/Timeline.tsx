@@ -7,6 +7,7 @@ const kindLabel = (e: PrayerEvent): string => {
     case "status":  return `Marked ${e.to}`;
     case "edited":  return "Updated";
     case "note":    return "Update posted";
+    case "merged":  return "Merged from another record";
   }
 };
 

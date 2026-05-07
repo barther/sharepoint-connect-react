@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Masthead } from "@/components/Masthead";
+import { MergeDialog } from "@/components/MergeDialog";
 import { safeFormat, safeTime } from "@/lib/dates";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Timeline } from "@/components/Timeline";
+import { isAdminUpn } from "@/lib/msal";
 import { usePrayerStore } from "@/lib/prayer-store";
 import { toast } from "sonner";
 
@@ -17,11 +19,15 @@ const Detail = () => {
   const allEvents = usePrayerStore((s) => s.events);
   const loaded = usePrayerStore((s) => s.loaded);
   const loading = usePrayerStore((s) => s.loading);
+  const currentUpn = usePrayerStore((s) => s.currentUpn);
   const setStatus = usePrayerStore((s) => s.setStatus);
   const remove = usePrayerStore((s) => s.remove);
   const addNote = usePrayerStore((s) => s.addNote);
 
+  const isAdmin = isAdminUpn(currentUpn);
+
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
 
   const sortedEvents = useMemo(() => {
@@ -162,6 +168,17 @@ const Detail = () => {
             Edit details
           </Link>
 
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setMergeOpen(true)}
+              className="btn-secondary w-full sm:w-auto"
+              title="Merge a duplicate record into this one"
+            >
+              Merge in duplicate
+            </button>
+          )}
+
           {item.status === "Active" && (
             <button
               onClick={() => doStatus("Ongoing", "Marked as ongoing.")}
@@ -225,6 +242,13 @@ const Detail = () => {
           <Timeline events={sortedEvents} />
         </section>
       </article>
+
+      {/* Merge dialog — admin-only, gated above by isAdmin on the trigger */}
+      <MergeDialog
+        canonical={item}
+        isOpen={mergeOpen}
+        onClose={() => setMergeOpen(false)}
+      />
 
       {/* Confirm delete */}
       {confirmDelete && (
