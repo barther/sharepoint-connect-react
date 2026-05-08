@@ -46,6 +46,10 @@ interface PrayerStore {
   addNote: (id: number, note: string) => Promise<void>;
   mergeInto: (canonicalId: number, duplicateId: number) => Promise<void>;
 
+  // Manual person-link actions (see PrayerRequest.personId).
+  linkToPerson: (thisId: number, otherId: number) => Promise<void>;
+  unlinkFromPerson: (id: number) => Promise<void>;
+
   eventsFor: (id: number) => PrayerEvent[];
 }
 
@@ -327,6 +331,77 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
         ...(mergedEvent ? [mergedEvent] : []),
       ],
     });
+  },
+
+  // Link this record to the same person as another. Idempotent.
+  // If neither record has a personId yet, the `other` record is promoted as
+  // the person's primary (its id becomes the personId). Otherwise we adopt
+  // whichever side already has a personId.
+  linkToPerson: async (thisId, otherId) => {
+    if (thisId === otherId) {
+      throw new Error("Can't link a record to itself.");
+    }
+    const items = get().items;
+    const self = items.find((i) => i.id === thisId);
+    const other = items.find((i) => i.id === otherId);
+    if (!self || !other) {
+      throw new Error("Could not find both records to link.");
+    }
+
+    const targetPersonId = other.personId ?? self.personId ?? other.id;
+
+    const writes: Promise<void>[] = [];
+    const patches: Array<{ id: number; personId: number }> = [];
+    if (other.personId !== targetPersonId) {
+      writes.push(patchRequest(other.id, { personId: targetPersonId }));
+      patches.push({ id: other.id, personId: targetPersonId });
+    }
+    if (self.personId !== targetPersonId) {
+      writes.push(patchRequest(self.id, { personId: targetPersonId }));
+      patches.push({ id: self.id, personId: targetPersonId });
+    }
+    await Promise.all(writes);
+
+    const now = new Date().toISOString();
+    set({
+      items: get().items.map((i) => {
+        const p = patches.find((x) => x.id === i.id);
+        return p ? { ...i, personId: p.personId, modified: now } : i;
+      }),
+    });
+  },
+
+  // Clear the person link on a record. If this leaves a personId group with
+  // only one remaining record, that record's personId is also cleared so the
+  // group disappears cleanly.
+  unlinkFromPerson: async (id) => {
+    const items = get().items;
+    const self = items.find((i) => i.id === id);
+    if (!self || self.personId === undefined) return;
+
+    const groupId = self.personId;
+    const siblings = items.filter((i) => i.id !== id && i.personId === groupId);
+
+    await patchRequest(id, { personId: null });
+    const now = new Date().toISOString();
+
+    let updated = get().items.map((i) =>
+      i.id === id ? { ...i, personId: undefined, modified: now } : i
+    );
+
+    if (siblings.length === 1) {
+      const lone = siblings[0];
+      try {
+        await patchRequest(lone.id, { personId: null });
+        updated = updated.map((i) =>
+          i.id === lone.id ? { ...i, personId: undefined, modified: now } : i
+        );
+      } catch {
+        /* non-fatal — leave the orphaned group; admin can clear later */
+      }
+    }
+
+    set({ items: updated });
   },
 
   eventsFor: (id) =>

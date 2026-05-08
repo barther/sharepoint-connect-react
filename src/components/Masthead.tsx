@@ -40,6 +40,7 @@ export const Masthead = () => {
         <nav className="grid grid-cols-2 sm:flex sm:items-center sm:gap-2">
           <NavLink to="/" active={pathname === "/"}>Current</NavLink>
           <NavLink to="/archive" active={pathname.startsWith("/archive")}>Archive</NavLink>
+          <NavLink to="/people" active={pathname.startsWith("/people")}>People</NavLink>
           <NavLink to="/request/new" active={pathname === "/request/new"}>
             <span aria-hidden className="text-primary font-bold mr-1">＋</span>
             <span>New</span>

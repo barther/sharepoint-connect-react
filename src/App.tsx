@@ -14,6 +14,7 @@ import Browse from "./pages/Browse.tsx";
 import Detail from "./pages/Detail.tsx";
 import Edit from "./pages/Edit.tsx";
 import Archive from "./pages/Archive.tsx";
+import People from "./pages/People.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => {
                 <Routes>
                   <Route path="/" element={<Browse />} />
                   <Route path="/archive" element={<Archive />} />
+                  <Route path="/people" element={<People />} />
                   <Route path="/request/new" element={<Edit />} />
                   <Route path="/request/:id" element={<Detail />} />
                   <Route path="/request/:id/edit" element={<Edit />} />

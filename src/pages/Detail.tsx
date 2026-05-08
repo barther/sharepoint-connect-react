@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { LinkPersonDialog } from "@/components/LinkPersonDialog";
 import { Masthead } from "@/components/Masthead";
 import { MergeDialog } from "@/components/MergeDialog";
 import { safeFormat, safeTime } from "@/lib/dates";
@@ -18,17 +19,20 @@ const Detail = () => {
   // new reference every render, which Zustand reads as a state change and loops
   // (React error #185).
   const allEvents = usePrayerStore((s) => s.events);
+  const allItems = usePrayerStore((s) => s.items);
   const loaded = usePrayerStore((s) => s.loaded);
   const loading = usePrayerStore((s) => s.loading);
   const currentUpn = usePrayerStore((s) => s.currentUpn);
   const setStatus = usePrayerStore((s) => s.setStatus);
   const remove = usePrayerStore((s) => s.remove);
   const addNote = usePrayerStore((s) => s.addNote);
+  const unlinkFromPerson = usePrayerStore((s) => s.unlinkFromPerson);
 
   const isAdmin = isAdminUpn(currentUpn);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
   const [showFullHistory, setShowFullHistory] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
 
@@ -68,6 +72,20 @@ const Detail = () => {
 
   const isInactive = item.status === "Resolved" || item.status === "Archived";
   const backTo = isInactive ? "/archive" : "/";
+
+  // Other records linked to this person (excluding this one).
+  const personSiblings = item.personId
+    ? allItems.filter((i) => i.id !== item.id && i.personId === item.personId)
+    : [];
+
+  const onUnlink = async () => {
+    try {
+      await unlinkFromPerson(item.id);
+      toast.success("Unlinked from person.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not unlink.");
+    }
+  };
 
   const onAddNote = async () => {
     if (!noteDraft.trim()) return;
@@ -118,6 +136,15 @@ const Detail = () => {
             <span className="hidden sm:inline"> · by {item.author}</span>
             <span className="sm:hidden block">by {item.author}</span>
           </p>
+          {personSiblings.length > 0 && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Linked with {personSiblings.length}{" "}
+              {personSiblings.length === 1 ? "other record" : "other records"} for this person.{" "}
+              <Link to="/people" className="text-primary font-medium hover:underline">
+                See all on the People roster
+              </Link>
+            </p>
+          )}
         </header>
 
         <section className="mt-6">
@@ -186,6 +213,28 @@ const Detail = () => {
               title="Merge a duplicate record into this one"
             >
               Merge in duplicate
+            </button>
+          )}
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setLinkOpen(true)}
+              className="btn-secondary w-full sm:w-auto"
+              title="Link to another record describing the same person"
+            >
+              Link as same person
+            </button>
+          )}
+
+          {isAdmin && item.personId !== undefined && (
+            <button
+              type="button"
+              onClick={onUnlink}
+              className="btn-quiet w-full sm:w-auto"
+              title="Remove this record from its person group"
+            >
+              Unlink from person
             </button>
           )}
 
@@ -277,6 +326,13 @@ const Detail = () => {
         canonical={item}
         isOpen={mergeOpen}
         onClose={() => setMergeOpen(false)}
+      />
+
+      {/* Link person dialog — admin-only, gated above by isAdmin on the trigger */}
+      <LinkPersonDialog
+        self={item}
+        isOpen={linkOpen}
+        onClose={() => setLinkOpen(false)}
       />
 
       {/* Confirm delete */}
