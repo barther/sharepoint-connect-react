@@ -153,6 +153,42 @@ export const MergeDialog = ({ canonical, isOpen, onClose }: Props) => {
                   "On the list since" will inherit the earlier date ({confirming.dateSubmitted}).
                 </p>
               )}
+
+            {(confirming.request ||
+              confirming.relationship ||
+              confirming.address ||
+              confirming.notes) && (
+              <div className="mt-4 bg-surface-sunken/60 border border-foreground/10 rounded-lg p-4">
+                <p className="eyebrow mb-2">Content on "{confirming.title}"</p>
+                {confirming.request && (
+                  <p className="text-base sm:text-lg leading-relaxed text-foreground/90">
+                    {confirming.request}
+                  </p>
+                )}
+                {confirming.relationship && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Relationship: {confirming.relationship}
+                  </p>
+                )}
+                {confirming.address && (
+                  <p className="mt-1 text-sm text-muted-foreground whitespace-pre-line">
+                    Address: {confirming.address}
+                  </p>
+                )}
+                {confirming.notes && (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Pastoral notes: {confirming.notes}
+                  </p>
+                )}
+                <p className="mt-3 text-sm text-muted-foreground">
+                  This content stays in the activity timeline as part of the merge entry, but it
+                  will <strong>not</strong> replace the canonical record's prayer text. If any of
+                  it should appear in the next bulletin, copy it now and paste it into a Post update on
+                  "{canonical.title}" after merging.
+                </p>
+              </div>
+            )}
+
             <p className="mt-4 text-sm text-destructive font-medium">
               This cannot be undone.
             </p>
