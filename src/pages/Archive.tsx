@@ -12,6 +12,23 @@ type Tab = "All" | "Resolved" | "Archived";
 const TAB_VALUES: readonly Tab[] = ["All", "Resolved", "Archived"];
 const DEFAULT_TAB: Tab = "All";
 
+type SortMode =
+  | "RecentlyClosed"
+  | "EarliestClosed"
+  | "SubmittedRecent"
+  | "SubmittedEarly"
+  | "NameAsc"
+  | "NameDesc";
+const SORT_VALUES: readonly SortMode[] = [
+  "RecentlyClosed",
+  "EarliestClosed",
+  "SubmittedRecent",
+  "SubmittedEarly",
+  "NameAsc",
+  "NameDesc",
+];
+const DEFAULT_SORT: SortMode = "RecentlyClosed";
+
 const inputClass =
   "w-full bg-card border border-foreground/25 focus:border-primary outline-none rounded-lg px-4 py-3 min-h-[48px] text-base";
 
@@ -48,6 +65,11 @@ const Archive = () => {
     catParam && (CATEGORIES as readonly string[]).includes(catParam)
       ? (catParam as PrayerCategory)
       : "All";
+  const sortParam = searchParams.get("sort");
+  const sort: SortMode =
+    sortParam && (SORT_VALUES as readonly string[]).includes(sortParam)
+      ? (sortParam as SortMode)
+      : DEFAULT_SORT;
 
   const updateParam = (key: string, value: string, isDefault: boolean) => {
     const next = new URLSearchParams(searchParams);
@@ -58,6 +80,7 @@ const Archive = () => {
   const setQuery = (v: string) => updateParam("q", v, false);
   const setTab = (v: Tab) => updateParam("tab", v, v === DEFAULT_TAB);
   const setCategoryFilter = (v: PrayerCategory | "All") => updateParam("cat", v, v === "All");
+  const setSort = (v: SortMode) => updateParam("sort", v, v === DEFAULT_SORT);
 
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -78,10 +101,20 @@ const Archive = () => {
           (i.relationship?.toLowerCase().includes(q) ?? false)
         );
       })
-      .sort((a, b) => safeTime(b.modified) - safeTime(a.modified));
-  }, [items, tab, query, categoryFilter]);
+      .sort((a, b) => {
+        switch (sort) {
+          case "RecentlyClosed":   return safeTime(b.modified) - safeTime(a.modified);
+          case "EarliestClosed":   return safeTime(a.modified) - safeTime(b.modified);
+          case "SubmittedRecent":  return safeTime(b.dateSubmitted) - safeTime(a.dateSubmitted);
+          case "SubmittedEarly":   return safeTime(a.dateSubmitted) - safeTime(b.dateSubmitted);
+          case "NameAsc":          return a.title.localeCompare(b.title);
+          case "NameDesc":         return b.title.localeCompare(a.title);
+        }
+      });
+  }, [items, tab, query, categoryFilter, sort]);
 
-  const filtersActive = query.trim().length > 0 || categoryFilter !== "All";
+  const filtersActive =
+    query.trim().length > 0 || categoryFilter !== "All" || sort !== DEFAULT_SORT;
 
   return (
     <div className="min-h-screen pb-12">
@@ -149,19 +182,36 @@ const Archive = () => {
         </div>
       </section>
 
-      {/* Category filter */}
+      {/* Category filter + Sort */}
       <section className="container-wide pb-4">
-        <label className="block">
-          <span className="eyebrow block mb-2">Category</span>
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value as PrayerCategory | "All")}
-            className={inputClass}
-          >
-            <option value="All">All categories</option>
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label className="block">
+            <span className="eyebrow block mb-2">Category</span>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value as PrayerCategory | "All")}
+              className={inputClass}
+            >
+              <option value="All">All categories</option>
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </label>
+          <label className="block">
+            <span className="eyebrow block mb-2">Sort</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortMode)}
+              className={inputClass}
+            >
+              <option value="RecentlyClosed">Recently closed</option>
+              <option value="EarliestClosed">Earliest closed</option>
+              <option value="SubmittedRecent">Submitted recently</option>
+              <option value="SubmittedEarly">Submitted earliest</option>
+              <option value="NameAsc">Name, A → Z</option>
+              <option value="NameDesc">Name, Z → A</option>
+            </select>
+          </label>
+        </div>
       </section>
 
       <main className="container-wide">
