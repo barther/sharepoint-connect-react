@@ -146,6 +146,13 @@ export const MergeDialog = ({ canonical, isOpen, onClose }: Props) => {
               <strong>"{confirming.title}"</strong> into <strong>"{canonical.title}"</strong>,
               then delete <strong>"{confirming.title}"</strong>.
             </p>
+            {confirming.request &&
+              confirming.request.trim() !== (canonical.request ?? "").trim() && (
+                <p className="mt-3 text-foreground/90 text-base leading-relaxed">
+                  The duplicate's prayer text will be added to <strong>"{canonical.title}"</strong>{" "}
+                  as a Post update so the wording stays in the timeline.
+                </p>
+              )}
             {confirming.dateSubmitted &&
               canonical.dateSubmitted &&
               confirming.dateSubmitted < canonical.dateSubmitted && (
@@ -181,10 +188,10 @@ export const MergeDialog = ({ canonical, isOpen, onClose }: Props) => {
                   </p>
                 )}
                 <p className="mt-3 text-sm text-muted-foreground">
-                  This content stays in the activity timeline as part of the merge entry, but it
-                  will <strong>not</strong> replace the canonical record's prayer text. If any of
-                  it should appear in the next bulletin, copy it now and paste it into a Post update on
-                  "{canonical.title}" after merging.
+                  The prayer text above is automatically added to "{canonical.title}" as a Post
+                  update. Relationship, address, and pastoral notes are preserved in the merge
+                  audit entry. The canonical record's own prayer text is <strong>not</strong>{" "}
+                  replaced.
                 </p>
               </div>
             )}

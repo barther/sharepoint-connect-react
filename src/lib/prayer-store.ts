@@ -227,8 +227,10 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
   //      that earlier dateSubmitted onto the canonical — the "on the list X"
   //      indicator should reflect the truer history.
   //   3. DELETE the duplicate's request item (its events are already moved).
-  //   4. Append a `merged` event on the canonical so the merge itself is
-  //      recorded in the timeline.
+  //   4a. If the duplicate had unique prayer text, append a `note` event on
+  //       the canonical so the wording survives in the pastoral timeline.
+  //   4b. Append a `merged` audit event with a full snapshot of the
+  //       duplicate's structured fields for forensic reference.
   //   5. Refresh local store from the same writes.
   // Destructive and irreversible — gated by `isAdminUpn` at the call site.
   mergeInto: async (canonicalId, duplicateId) => {
@@ -258,11 +260,29 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
     // 3. Delete the duplicate
     await deleteRequest(duplicateId);
 
-    // 4. Audit event on the canonical — preserves the duplicate's text content
-    //    in the timeline. The duplicate's `Request`/`Relationship`/`Address`/
-    //    `Notes` columns aren't events, so they'd otherwise vanish with the
-    //    DELETE in step 3. Capturing them in the merge event's note makes the
-    //    merge non-destructive even if the duplicate had unique wording.
+    // 4a. If the duplicate had its own request body and it differs from the
+    //     canonical's, promote it to a `note` event so the wording survives in
+    //     the pastoral timeline. Without this, deleting the duplicate row in
+    //     step 3 would lose any unique narrative — the `merged` audit event
+    //     below preserves it for forensics, but the timeline hides maintenance
+    //     events by default.
+    let promotedNoteEvent: PrayerEvent | undefined;
+    if (duplicate.request && duplicate.request.trim() !== (canonical.request ?? "").trim()) {
+      try {
+        promotedNoteEvent = await createEvent({
+          requestId: canonicalId,
+          kind: "note",
+          byName: get().currentScribe,
+          byUpn: get().currentUpn,
+          note: `From merged record "${duplicate.title}" (submitted ${duplicate.dateSubmitted}):\n\n${duplicate.request}`,
+        });
+      } catch {
+        /* non-fatal */
+      }
+    }
+
+    // 4b. Audit event on the canonical recording the merge itself, with a
+    //     full snapshot of the duplicate's structured fields for forensics.
     const snapshot: string[] = [];
     if (duplicate.request) snapshot.push(`Request: ${duplicate.request}`);
     if (duplicate.relationship) snapshot.push(`Relationship: ${duplicate.relationship}`);
@@ -303,6 +323,7 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
         ...get().events.map((e) =>
           e.requestId === duplicateId ? { ...e, requestId: canonicalId } : e
         ),
+        ...(promotedNoteEvent ? [promotedNoteEvent] : []),
         ...(mergedEvent ? [mergedEvent] : []),
       ],
     });
