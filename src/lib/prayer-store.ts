@@ -258,7 +258,20 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
     // 3. Delete the duplicate
     await deleteRequest(duplicateId);
 
-    // 4. Audit event on the canonical
+    // 4. Audit event on the canonical — preserves the duplicate's text content
+    //    in the timeline. The duplicate's `Request`/`Relationship`/`Address`/
+    //    `Notes` columns aren't events, so they'd otherwise vanish with the
+    //    DELETE in step 3. Capturing them in the merge event's note makes the
+    //    merge non-destructive even if the duplicate had unique wording.
+    const snapshot: string[] = [];
+    if (duplicate.request) snapshot.push(`Request: ${duplicate.request}`);
+    if (duplicate.relationship) snapshot.push(`Relationship: ${duplicate.relationship}`);
+    if (duplicate.address) snapshot.push(`Address: ${duplicate.address}`);
+    if (duplicate.notes) snapshot.push(`Pastoral notes: ${duplicate.notes}`);
+    const header = `Merged from "${duplicate.title}" (id #${duplicateId}) — ${dupEvents.length} event${dupEvents.length === 1 ? "" : "s"} preserved.`;
+    const noteText = snapshot.length
+      ? `${header}\n\nContent at time of merge:\n\n${snapshot.join("\n\n")}`
+      : header;
     let mergedEvent: PrayerEvent | undefined;
     try {
       mergedEvent = await createEvent({
@@ -266,7 +279,7 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
         kind: "merged",
         byName: get().currentScribe,
         byUpn: get().currentUpn,
-        note: `Merged from "${duplicate.title}" (id #${duplicateId}) — ${dupEvents.length} event${dupEvents.length === 1 ? "" : "s"} preserved.`,
+        note: noteText,
       });
     } catch {
       /* non-fatal — the merge itself succeeded, audit row missed */
