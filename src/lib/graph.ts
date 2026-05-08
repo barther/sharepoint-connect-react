@@ -65,6 +65,8 @@ interface RequestFields {
   // when a scribe actually edited. We always set this on writes so it tracks
   // the real edit time end-to-end.
   LastUpdated?: string;
+  // Manual person-link grouping (see PrayerRequest.personId).
+  PersonId?: number;
 }
 
 interface ListItem<F> {
@@ -104,6 +106,7 @@ function rowToRequest(item: ListItem<RequestFields>): PrayerRequest {
     modified: f.LastUpdated || f.DateSubmitted || item.createdDateTime,
     created: item.createdDateTime,
     author: item.createdBy?.user?.displayName ?? "Unknown",
+    personId: typeof f.PersonId === "number" ? f.PersonId : undefined,
   };
 }
 
@@ -141,9 +144,14 @@ export async function createRequest(
   return rowToRequest(created);
 }
 
+// `personId: null` clears the link; `undefined` leaves it untouched.
+export type RequestPatch = Partial<Omit<PrayerRequest, "personId">> & {
+  personId?: number | null;
+};
+
 export async function patchRequest(
   id: number,
-  patch: Partial<PrayerRequest>
+  patch: RequestPatch
 ): Promise<void> {
   // Always bump LastUpdated so any write (status flip, edit, note-attached
   // touch) sets a fresh "modified" the app can trust.
@@ -158,6 +166,11 @@ export async function patchRequest(
   }
   if (patch.address !== undefined) fields.Address = patch.address;
   if (patch.notes !== undefined) fields.Notes = patch.notes;
+  // PersonId === undefined means "don't touch"; null clears the link.
+  if (patch.personId !== undefined) {
+    // SharePoint expects null to clear a Number column, not 0.
+    fields.PersonId = patch.personId === null ? (null as unknown as number) : patch.personId;
+  }
 
   await gfetch(
     `/sites/${SITE_ID}/lists/${REQUESTS_LIST_ID}/items/${id}/fields`,

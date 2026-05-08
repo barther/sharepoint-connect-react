@@ -23,6 +23,12 @@ export interface PrayerRequest {
   modified: string; // ISO datetime
   created: string; // ISO datetime
   author: string;
+  // Manual link grouping multiple records that describe the same person across
+  // separate pastoral episodes. Records sharing a personId belong to the same
+  // person. The record whose `id === personId` is the "primary" — its title
+  // serves as the person's display name. Records with no personId are
+  // ungrouped (an implicit single-record person).
+  personId?: number;
 }
 
 // Audit trail — one row per change. In SharePoint this maps to either a
