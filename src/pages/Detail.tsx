@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Masthead } from "@/components/Masthead";
 import { MergeDialog } from "@/components/MergeDialog";
 import { safeFormat, safeTime } from "@/lib/dates";
+import { splitEventsForDisplay } from "@/lib/events";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Timeline } from "@/components/Timeline";
 import { isAdminUpn } from "@/lib/msal";
@@ -28,6 +29,7 @@ const Detail = () => {
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
+  const [showFullHistory, setShowFullHistory] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
 
   const sortedEvents = useMemo(() => {
@@ -36,6 +38,14 @@ const Detail = () => {
       .filter((e) => e.requestId === item.id)
       .sort((a, b) => safeTime(b.at) - safeTime(a.at));
   }, [allEvents, item]);
+
+  // Split events into pastoral story vs admin/merge maintenance. Default
+  // Timeline shows just the pastoral side; admin can flip on full history.
+  const { pastoral: pastoralEvents, maintenance: maintenanceEvents } = useMemo(
+    () => splitEventsForDisplay(sortedEvents),
+    [sortedEvents]
+  );
+  const visibleEvents = showFullHistory ? sortedEvents : pastoralEvents;
 
   if (!item) {
     const stillLoading = !loaded && loading;
@@ -235,11 +245,30 @@ const Detail = () => {
           <div className="flex items-baseline justify-between gap-3 mb-4">
             <h2 className="text-xl font-semibold">Activity</h2>
             <span className="text-sm text-muted-foreground">
-              {sortedEvents.length} {sortedEvents.length === 1 ? "entry" : "entries"}
+              {visibleEvents.length}{" "}
+              {visibleEvents.length === 1 ? "entry" : "entries"}
+              {!showFullHistory && maintenanceEvents.length > 0 && (
+                <>
+                  {" "}
+                  <span className="text-muted-foreground/70">
+                    ({maintenanceEvents.length} hidden)
+                  </span>
+                </>
+              )}
             </span>
           </div>
 
-          <Timeline events={sortedEvents} />
+          {isAdmin && maintenanceEvents.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowFullHistory((v) => !v)}
+              className="text-sm text-primary font-medium hover:underline underline-offset-4 mb-4 inline-flex items-center gap-1"
+            >
+              {showFullHistory ? "Hide maintenance entries" : "Show full history"}
+            </button>
+          )}
+
+          <Timeline events={visibleEvents} />
         </section>
       </article>
 
