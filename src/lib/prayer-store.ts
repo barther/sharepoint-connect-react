@@ -258,7 +258,12 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
       (!canonical.dateSubmitted || duplicate.dateSubmitted < canonical.dateSubmitted)
     ) {
       inheritedDateSubmitted = duplicate.dateSubmitted;
-      await patchRequest(canonicalId, { dateSubmitted: duplicate.dateSubmitted });
+      // Bookkeeping — don't surface as "Recently updated."
+      await patchRequest(
+        canonicalId,
+        { dateSubmitted: duplicate.dateSubmitted },
+        { touch: false }
+      );
     }
 
     // 3. Delete the duplicate
@@ -309,8 +314,9 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
       /* non-fatal — the merge itself succeeded, audit row missed */
     }
 
-    // 5. Reflect in local store
-    const now = new Date().toISOString();
+    // 5. Reflect in local store. Note: `modified` is NOT bumped — merge is
+    //    bookkeeping, not pastoral activity, and shouldn't push the record to
+    //    the top of the "Recently updated" sort.
     set({
       items: get()
         .items.filter((i) => i.id !== duplicateId)
@@ -319,7 +325,6 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
             ? {
                 ...i,
                 dateSubmitted: inheritedDateSubmitted ?? i.dateSubmitted,
-                modified: now,
               }
             : i
         ),
@@ -353,20 +358,24 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
     const writes: Promise<void>[] = [];
     const patches: Array<{ id: number; personId: number }> = [];
     if (other.personId !== targetPersonId) {
-      writes.push(patchRequest(other.id, { personId: targetPersonId }));
+      // Bookkeeping write — don't surface in "Recently updated."
+      writes.push(
+        patchRequest(other.id, { personId: targetPersonId }, { touch: false })
+      );
       patches.push({ id: other.id, personId: targetPersonId });
     }
     if (self.personId !== targetPersonId) {
-      writes.push(patchRequest(self.id, { personId: targetPersonId }));
+      writes.push(
+        patchRequest(self.id, { personId: targetPersonId }, { touch: false })
+      );
       patches.push({ id: self.id, personId: targetPersonId });
     }
     await Promise.all(writes);
 
-    const now = new Date().toISOString();
     set({
       items: get().items.map((i) => {
         const p = patches.find((x) => x.id === i.id);
-        return p ? { ...i, personId: p.personId, modified: now } : i;
+        return p ? { ...i, personId: p.personId } : i;
       }),
     });
   },
@@ -382,19 +391,19 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
     const groupId = self.personId;
     const siblings = items.filter((i) => i.id !== id && i.personId === groupId);
 
-    await patchRequest(id, { personId: null });
-    const now = new Date().toISOString();
+    // Bookkeeping write — don't surface in "Recently updated."
+    await patchRequest(id, { personId: null }, { touch: false });
 
     let updated = get().items.map((i) =>
-      i.id === id ? { ...i, personId: undefined, modified: now } : i
+      i.id === id ? { ...i, personId: undefined } : i
     );
 
     if (siblings.length === 1) {
       const lone = siblings[0];
       try {
-        await patchRequest(lone.id, { personId: null });
+        await patchRequest(lone.id, { personId: null }, { touch: false });
         updated = updated.map((i) =>
-          i.id === lone.id ? { ...i, personId: undefined, modified: now } : i
+          i.id === lone.id ? { ...i, personId: undefined } : i
         );
       } catch {
         /* non-fatal — leave the orphaned group; admin can clear later */
