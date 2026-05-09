@@ -149,13 +149,23 @@ export type RequestPatch = Partial<Omit<PrayerRequest, "personId">> & {
   personId?: number | null;
 };
 
+export interface PatchRequestOptions {
+  // When false, the LastUpdated bump is skipped. Use for housekeeping writes
+  // (linking, merge bookkeeping) that shouldn't re-surface a record in the
+  // "Recently updated" sort. Default true — pastoral writes (text edits,
+  // status, post updates) keep the modified timestamp honest.
+  touch?: boolean;
+}
+
 export async function patchRequest(
   id: number,
-  patch: RequestPatch
+  patch: RequestPatch,
+  opts: PatchRequestOptions = {}
 ): Promise<void> {
-  // Always bump LastUpdated so any write (status flip, edit, note-attached
-  // touch) sets a fresh "modified" the app can trust.
-  const fields: RequestFields = { LastUpdated: new Date().toISOString() };
+  const touch = opts.touch ?? true;
+  const fields: RequestFields = touch
+    ? { LastUpdated: new Date().toISOString() }
+    : {};
   if (patch.title !== undefined) fields.Title = patch.title;
   if (patch.request !== undefined) fields.Request = patch.request;
   if (patch.category !== undefined) fields.Category = patch.category;
