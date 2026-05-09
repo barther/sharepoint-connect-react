@@ -52,21 +52,24 @@ const Detail = () => {
   const visibleEvents = showFullHistory ? sortedEvents : pastoralEvents;
 
   // When was the body of "Current request" last actually set, and by whom?
-  // `addNote` (a Post update) writes a `note` event whose text matches the new
-  // body verbatim — that's the strongest signal. Merge-promoted note events
-  // have a "From merged record …:" prefix that won't match the body, so
+  // Both `addNote` (a Post update) and `update()` with a body change stash the
+  // new text in their event's `note`, so an exact-text match against either
+  // kind tells us when the live body was last set. Merge-promoted note events
+  // carry a "From merged record …:" prefix that won't match the body, so
   // they're correctly excluded. If nothing matches, the body comes from the
-  // original submission, so fall back to the `created` event or
+  // original submission — fall back to the `created` event or
   // dateSubmitted/author. Hook must run on every render — `item` may be
   // undefined while loading.
   const bodyProvenance = useMemo(() => {
     if (!item) return null;
     const liveBody = (item.request ?? "").trim();
     if (liveBody) {
-      const postUpdate = sortedEvents.find(
-        (e) => e.kind === "note" && (e.note ?? "").trim() === liveBody
+      const lastSet = sortedEvents.find(
+        (e) =>
+          (e.kind === "note" || e.kind === "edited") &&
+          (e.note ?? "").trim() === liveBody
       );
-      if (postUpdate) return { at: postUpdate.at, by: postUpdate.by, kind: "post" as const };
+      if (lastSet) return { at: lastSet.at, by: lastSet.by, kind: "updated" as const };
     }
     const created = sortedEvents.find((e) => e.kind === "created");
     if (created) return { at: created.at, by: created.by, kind: "original" as const };
@@ -176,7 +179,7 @@ const Detail = () => {
           </p>
           {bodyProvenance && (
             <p className="text-sm text-muted-foreground mt-2">
-              {bodyProvenance.kind === "post" ? "Posted as an update" : "From the original request"}{" "}
+              {bodyProvenance.kind === "updated" ? "Last updated" : "From the original request"}{" "}
               {safeFormat(bodyProvenance.at, "MMM d, yyyy", "an unknown date")} by{" "}
               {bodyProvenance.by}
             </p>
