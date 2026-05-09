@@ -22,9 +22,29 @@ describe("isMaintenanceEvent", () => {
     expect(isMaintenanceEvent(e, [e])).toBe(false);
   });
 
-  it("treats edited events as maintenance", () => {
+  it("treats a content-free edited event as maintenance", () => {
     const e = ev({ id: 1, kind: "edited" });
     expect(isMaintenanceEvent(e, [e])).toBe(true);
+  });
+
+  it("treats an edited event with a substantive note as pastoral", () => {
+    // Historical importers sometimes class real post-updates as `edited`.
+    const e = ev({ id: 1, kind: "edited", note: "Surgery went well; recovering." });
+    expect(isMaintenanceEvent(e, [e])).toBe(false);
+  });
+
+  it("surfaces a re-add `created` after the record was archived", () => {
+    const original = ev({ id: 1, kind: "created", at: "2025-09-17T00:00:00Z" });
+    const archived = ev({
+      id: 2,
+      kind: "status",
+      at: "2025-11-26T00:00:00Z",
+      from: "Active",
+      to: "Archived",
+    });
+    const reAdded = ev({ id: 3, kind: "created", at: "2026-05-06T00:00:00Z" });
+    const all = [original, archived, reAdded];
+    expect(isMaintenanceEvent(reAdded, all)).toBe(false);
   });
 
   it("treats merged events as maintenance", () => {
