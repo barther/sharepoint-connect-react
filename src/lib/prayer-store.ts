@@ -129,13 +129,16 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
         /* non-fatal */
       }
     }
+    const bodyChanged =
+      patch.request !== undefined && patch.request !== before.request;
     const textChanged =
-      (patch.request !== undefined && patch.request !== before.request) ||
+      bodyChanged ||
       (patch.title !== undefined && patch.title !== before.title) ||
       (patch.category !== undefined && patch.category !== before.category) ||
       (patch.relationship !== undefined && patch.relationship !== before.relationship) ||
       (patch.address !== undefined && patch.address !== before.address) ||
-      (patch.notes !== undefined && patch.notes !== before.notes);
+      (patch.notes !== undefined && patch.notes !== before.notes) ||
+      (patch.dateSubmitted !== undefined && patch.dateSubmitted !== before.dateSubmitted);
     if (textChanged) {
       try {
         const ev = await createEvent({
@@ -143,7 +146,11 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
           kind: "edited",
           byName: get().currentScribe,
           byUpn: get().currentUpn,
-          note: opts?.note,
+          // When the body changed, capture the new text as the event's note so
+          // the Detail page's bodyProvenance heuristic can recognize this edit
+          // as the source of the live body. Otherwise honor any caller-supplied
+          // annotation.
+          note: bodyChanged ? patch.request : opts?.note,
         });
         newEvents.push(ev);
       } catch {
@@ -210,18 +217,30 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
     // Promote the new entry to the request body — the headline always shows
     // the latest update, and the Wednesday bulletin (which reads `Request`)
     // gets the same text. patchRequest also bumps LastUpdated.
+    let promoted = false;
     try {
       await patchRequest(id, { request: trimmed });
+      promoted = true;
     } catch {
-      /* non-fatal — the audit event still landed */
+      /* fall through — caller is told the body didn't promote */
     }
     const now = new Date().toISOString();
     set({
       events: [...get().events, ev],
-      items: get().items.map((i) =>
-        i.id === id ? { ...i, request: trimmed, modified: now } : i
-      ),
+      // Only mirror the body/modified locally if the server actually accepted
+      // it. Optimistic-then-divergent state is worse than a missing update —
+      // the next reload would silently revert it.
+      items: promoted
+        ? get().items.map((i) =>
+            i.id === id ? { ...i, request: trimmed, modified: now } : i
+          )
+        : get().items,
     });
+    if (!promoted) {
+      throw new Error(
+        "Update saved to the timeline, but couldn't be promoted to the headline. Please try again."
+      );
+    }
   },
 
   // Merge a duplicate record into a canonical one. Steps, in order:

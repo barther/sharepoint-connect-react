@@ -18,12 +18,16 @@ export const MergeDialog = ({ canonical, isOpen, onClose }: Props) => {
   const [query, setQuery] = useState("");
   const [confirming, setConfirming] = useState<PrayerRequest | null>(null);
   const [merging, setMerging] = useState(false);
+  // Hide archived/resolved records from candidates by default — accidentally
+  // merging into a years-old archived row is destructive and rarely intended.
+  const [includeArchive, setIncludeArchive] = useState(false);
 
   // Default the search to the canonical's title each time the dialog opens.
   useEffect(() => {
     if (isOpen) {
       setQuery(canonical.title);
       setConfirming(null);
+      setIncludeArchive(false);
     }
   }, [isOpen, canonical.title]);
 
@@ -32,13 +36,29 @@ export const MergeDialog = ({ canonical, isOpen, onClose }: Props) => {
     if (q.length < 2) return [];
     return allItems
       .filter((i) => i.id !== canonical.id)
+      .filter((i) => includeArchive || (i.status !== "Archived" && i.status !== "Resolved"))
       .filter(
         (i) =>
           i.title.toLowerCase().includes(q) ||
           (i.relationship?.toLowerCase().includes(q) ?? false)
       )
       .slice(0, 10);
-  }, [allItems, query, canonical]);
+  }, [allItems, query, canonical, includeArchive]);
+
+  // How many additional matches are hidden behind the archive filter — surface
+  // the count so the admin knows the toggle would reveal more.
+  const hiddenArchiveCount = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2 || includeArchive) return 0;
+    return allItems
+      .filter((i) => i.id !== canonical.id)
+      .filter((i) => i.status === "Archived" || i.status === "Resolved")
+      .filter(
+        (i) =>
+          i.title.toLowerCase().includes(q) ||
+          (i.relationship?.toLowerCase().includes(q) ?? false)
+      ).length;
+  }, [allItems, query, canonical, includeArchive]);
 
   const eventCountFor = (id: number) =>
     allEvents.filter((e) => e.requestId === id).length;
@@ -85,6 +105,21 @@ export const MergeDialog = ({ canonical, isOpen, onClose }: Props) => {
               autoCapitalize="off"
               className="w-full bg-background border border-foreground/25 focus:border-primary outline-none rounded-lg px-4 py-3 min-h-[48px] text-base mt-5"
             />
+
+            <label className="inline-flex items-center gap-2 mt-3 text-sm text-foreground/80 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={includeArchive}
+                onChange={(e) => setIncludeArchive(e.target.checked)}
+                className="h-4 w-4"
+              />
+              Include archived and resolved
+              {hiddenArchiveCount > 0 && (
+                <span className="text-muted-foreground">
+                  ({hiddenArchiveCount} hidden)
+                </span>
+              )}
+            </label>
 
             <div className="mt-4">
               {query.trim().length < 2 ? (
