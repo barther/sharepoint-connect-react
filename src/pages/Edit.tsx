@@ -30,6 +30,10 @@ const Edit = () => {
   const [notes, setNotes] = useState(existing?.notes ?? "");
 
   const [saving, setSaving] = useState(false);
+  // Quiet-save: typo fixes and small wording cleanups don't deserve to push
+  // the record to the top of "Recently updated" or change its provenance line.
+  // Off by default — most edits really are substantive updates.
+  const [quietSave, setQuietSave] = useState(false);
 
   // Live duplicate-detection on the title field for new requests — surfaces
   // existing entries with similar titles so scribes don't re-create someone
@@ -89,8 +93,12 @@ const Edit = () => {
         toast.success("Request added to the list.");
         navigate(`/request/${created.id}`);
       } else if (existing) {
-        await update(existing.id, { title, request, category, status, relationship, dateSubmitted, address, notes });
-        toast.success("Request updated.");
+        await update(
+          existing.id,
+          { title, request, category, status, relationship, dateSubmitted, address, notes },
+          { quiet: quietSave }
+        );
+        toast.success(quietSave ? "Saved quietly." : "Request updated.");
         navigate(`/request/${existing.id}`);
       }
     } catch (err: unknown) {
@@ -221,12 +229,29 @@ const Edit = () => {
 
         <hr className="rule my-10" />
 
+        {!isNew && (
+          <label className="flex items-start gap-3 cursor-pointer mb-5">
+            <input
+              type="checkbox"
+              checked={quietSave}
+              onChange={(e) => setQuietSave(e.target.checked)}
+              className="h-5 w-5 mt-0.5 flex-shrink-0"
+            />
+            <span className="text-base">
+              <span className="font-medium">Just a small fix</span>
+              <span className="block text-sm text-muted-foreground mt-0.5">
+                Typo or wording cleanup — don't surface this as recent activity.
+              </span>
+            </span>
+          </label>
+        )}
+
         <div className="flex flex-col-reverse sm:flex-row gap-3 sm:items-center sm:justify-end">
           <button type="button" onClick={() => navigate(-1)} className="btn-secondary w-full sm:w-auto">
             Cancel
           </button>
           <button type="submit" disabled={saving} className="btn-primary w-full sm:w-auto disabled:opacity-50">
-            {saving ? "Saving…" : isNew ? "Add to the list" : "Save changes"}
+            {saving ? "Saving…" : isNew ? "Add to the list" : quietSave ? "Save quietly" : "Save changes"}
           </button>
         </div>
       </form>
