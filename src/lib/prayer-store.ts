@@ -39,7 +39,7 @@ interface PrayerStore {
   update: (
     id: number,
     patch: Partial<PrayerRequest>,
-    opts?: { note?: string }
+    opts?: { note?: string; quiet?: boolean }
   ) => Promise<void>;
   remove: (id: number) => Promise<void>;
   setStatus: (id: number, status: PrayerStatus) => Promise<void>;
@@ -105,11 +105,16 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
     const before = get().items.find((i) => i.id === id);
     if (!before) return;
 
-    await patchRequest(id, patch);
+    // Quiet edits (typo fixes, small wording cleanups) skip the LastUpdated
+    // bump so they don't surface as recent activity, and the body text isn't
+    // captured in the audit event (so bodyProvenance doesn't pick it up).
+    // The audit event still lands so we know who touched what and when.
+    const quiet = opts?.quiet === true;
+    await patchRequest(id, patch, { touch: !quiet });
     const now = new Date().toISOString();
     set({
       items: get().items.map((i) =>
-        i.id === id ? { ...i, ...patch, modified: now } : i
+        i.id === id ? { ...i, ...patch, modified: quiet ? i.modified : now } : i
       ),
     });
 
@@ -148,9 +153,11 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
           byUpn: get().currentUpn,
           // When the body changed, capture the new text as the event's note so
           // the Detail page's bodyProvenance heuristic can recognize this edit
-          // as the source of the live body. Otherwise honor any caller-supplied
-          // annotation.
-          note: bodyChanged ? patch.request : opts?.note,
+          // as the source of the live body. For quiet edits we skip that
+          // capture — the whole point is for the body to keep reading as
+          // unchanged from the viewer's perspective. Otherwise honor any
+          // caller-supplied annotation.
+          note: bodyChanged && !quiet ? patch.request : opts?.note,
         });
         newEvents.push(ev);
       } catch {
